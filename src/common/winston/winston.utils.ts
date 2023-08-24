@@ -43,3 +43,13 @@ export const winstonConsoleTransport = new winston.transports.Console({
     ),
   ),
 });
+
+export const testingModule = {
+  winstonConsoleTransport,
+  textFormat,
+  formatRunner,
+  formatTimestamp,
+  formatContext,
+  formatMs,
+  formatStack,
+};
