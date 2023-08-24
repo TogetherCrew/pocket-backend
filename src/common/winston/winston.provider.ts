@@ -1,11 +1,10 @@
 import { Inject, Injectable, LoggerService } from '@nestjs/common';
-import { MODULE_OPTIONS_TOKEN } from './winston.module-definition';
-import { Logger, LoggerOptions, createLogger } from 'winston';
+import { Logger } from 'winston';
 import { WinstonLevel } from './types/common.type';
+import { WINSTON_LOGGER } from './winston.constant';
 
 @Injectable()
 export class WinstonProvider implements LoggerService {
-  private logger: Logger;
   private readonly levels: WinstonLevel[] = [
     'debug',
     'error',
@@ -14,38 +13,28 @@ export class WinstonProvider implements LoggerService {
     'warn',
   ];
 
-  constructor(@Inject(MODULE_OPTIONS_TOKEN) readonly options: LoggerOptions) {
-    this.logger = createLogger(options);
-  }
+  constructor(@Inject(WINSTON_LOGGER) private readonly logger: Logger) {}
 
   private appendContextIntoMeta(
     contextOrMeta: string | Record<string, any>,
     metadata: Record<string, any>,
   ) {
-    return typeof contextOrMeta === 'object'
+    typeof contextOrMeta === 'object'
       ? contextOrMeta
       : { context: contextOrMeta, ...metadata };
   }
 
-  log(
-    message: string,
-    context?: string,
-    metadata?: Record<string, any>,
-  ): Logger;
-  log(
-    level: WinstonLevel,
-    message: string,
-    metadata?: Record<string, any>,
-  ): Logger;
+  log(message: string, context?: string, metadata?: Record<string, any>);
+  log(level: WinstonLevel, message: string, metadata?: Record<string, any>);
   log(
     messageOrLevel: string | WinstonLevel,
     messageOrContext?: string,
     metadata?: Record<string, any>,
-  ): Logger {
+  ) {
     if (this.levels.includes(messageOrLevel.toLowerCase() as WinstonLevel)) {
-      return this.logger.log(messageOrLevel, messageOrContext, metadata);
+      this.logger.log(messageOrLevel, messageOrContext, metadata);
     } else {
-      return this.logger.info(
+      this.logger.info(
         messageOrLevel,
         this.appendContextIntoMeta(messageOrContext, metadata),
       );
@@ -58,8 +47,8 @@ export class WinstonProvider implements LoggerService {
     message: string,
     contextOrMetadata?: string | Record<string, any>,
     metadata?: Record<string, any>,
-  ): Logger {
-    return this.logger.error(
+  ) {
+    this.logger.error(
       message,
       this.appendContextIntoMeta(contextOrMetadata, metadata),
     );
@@ -71,8 +60,8 @@ export class WinstonProvider implements LoggerService {
     message: string,
     contextOrMetadata?: string | Record<string, any>,
     metadata?: Record<string, any>,
-  ): Logger {
-    return this.logger.warn(
+  ) {
+    this.logger.warn(
       message,
       this.appendContextIntoMeta(contextOrMetadata, metadata),
     );
@@ -84,8 +73,8 @@ export class WinstonProvider implements LoggerService {
     message: string,
     contextOrMetadata?: string | Record<string, any>,
     metadata?: Record<string, any>,
-  ): Logger {
-    return this.logger.debug(
+  ) {
+    this.logger.debug(
       message,
       this.appendContextIntoMeta(contextOrMetadata, metadata),
     );
@@ -97,8 +86,8 @@ export class WinstonProvider implements LoggerService {
     message: string,
     contextOrMetadata?: string | Record<string, any>,
     metadata?: Record<string, any>,
-  ): Logger {
-    return this.logger.verbose(
+  ) {
+    this.logger.verbose(
       message,
       this.appendContextIntoMeta(contextOrMetadata, metadata),
     );
