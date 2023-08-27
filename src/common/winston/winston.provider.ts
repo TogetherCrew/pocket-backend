@@ -19,7 +19,7 @@ export class WinstonProvider implements LoggerService {
     contextOrMeta: string | Record<string, any>,
     metadata: Record<string, any>,
   ) {
-    typeof contextOrMeta === 'object'
+    return typeof contextOrMeta === 'object'
       ? contextOrMeta
       : { context: contextOrMeta, ...metadata };
   }
