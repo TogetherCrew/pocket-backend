@@ -4,8 +4,10 @@ import { RETRIEVERS } from './retriever.constant';
 import { SnapShotRetriever } from './retrievers/snap-shot.retriever';
 import { GoogleSheetRetriever } from './retrievers/google-sheet.retriever';
 import { PoktScanRetriever } from './retrievers/pokt-scan.retriever';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
+  imports: [HttpModule],
   providers: [
     CoinGeckoRetriever,
     SnapShotRetriever,
