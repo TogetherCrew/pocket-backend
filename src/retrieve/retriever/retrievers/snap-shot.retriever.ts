@@ -21,11 +21,6 @@ export class SnapShotRetriever
   ) {}
 
   private async request(query: string, variables: Record<string, any>) {
-    this.logger.debug(
-      `query: ${query}\nvariables: ${variables}`,
-      SnapShotRetriever.name,
-    );
-
     const response = await firstValueFrom(
       this.axios.post<SnapShotResponse>(
         this.config.get<string>('SNAP_SHOT_API_BASE_URL'),
@@ -39,6 +34,16 @@ export class SnapShotRetriever
           },
         },
       ),
+    );
+
+    this.logger.debug(
+      'request method\n' +
+        `input => ${JSON.stringify({ query, variables })}\n` +
+        `response => ${JSON.stringify({
+          status: response.status,
+          body: response.data,
+        })}`,
+      SnapShotRetriever.name,
     );
 
     return response.data;

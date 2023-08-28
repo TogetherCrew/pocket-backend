@@ -38,9 +38,12 @@ export class CoinGeckoRetriever
     );
 
     this.logger.debug(
-      'request method' +
-        `\ninput => endpoint: ${url} method: ${method} body: ${body} params: ${query}` +
-        `\nresponse => status: ${response.status} body: ${response.data}`,
+      'request method\n' +
+        `input => ${JSON.stringify({ url, method, body, query })}\n` +
+        `response => ${JSON.stringify({
+          status: response.status,
+          body: response.data,
+        })}`,
       CoinGeckoRetriever.name,
     );
 

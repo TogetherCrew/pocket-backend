@@ -21,11 +21,6 @@ export class PoktScanRetriever
   ) {}
 
   private async request(query: string, variables: Record<string, any>) {
-    this.logger.debug(
-      `query: ${query}\nvariables: ${variables}`,
-      PoktScanRetriever.name,
-    );
-
     const response = await firstValueFrom(
       this.axios.post<PoktScanResponse>(
         this.config.get<string>('POKT_SCAN_API_BASE_URL'),
@@ -40,6 +35,16 @@ export class PoktScanRetriever
           },
         },
       ),
+    );
+
+    this.logger.debug(
+      'request method\n' +
+        `input => ${JSON.stringify({ query, variables })}\n` +
+        `response => ${JSON.stringify({
+          status: response.status,
+          body: response.data,
+        })}`,
+      PoktScanRetriever.name,
     );
 
     return response.data;
