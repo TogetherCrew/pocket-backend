@@ -43,7 +43,7 @@ export class PoktScanRetriever
         `response => ${JSON.stringify({
           status: response.status,
           body: response.data,
-        })}`,
+        })}\n`,
       PoktScanRetriever.name,
     );
 
@@ -52,21 +52,37 @@ export class PoktScanRetriever
 
   private getGQLQuery(): string {
     return `
-    query poktScan($incomeAndExpenseInput: SummaryWithBlockInput!) {
-      incomes: ListSummaryBetweenDates(input: $incomeAndExpenseInput) {
+    query poktscan(
+      $listSummaryInput: SummaryWithBlockInput!
+      $supplyInput: GetSupplySummaryFromStartDateInput!
+    ) {
+      incomes: ListSummaryBetweenDates(input: $listSummaryInput) {
         points {
           point
           amount: total_dao_rewards
         }
       }
-      expenses: ListDaoExpensesBetweenDates(input: $incomeAndExpenseInput) {
+      circulating_supply: ListSummaryBetweenDates(input: $listSummaryInput) {
+        points {
+          point
+          amount: m0
+        }
+      }
+      expenses: ListDaoExpensesBetweenDates(input: $listSummaryInput) {
         points {
           point
           amount
         }
       }
-    }
-    `;
+      supply: GetSupplySummaryFromStartToCurrentDate(input: $supplyInput) {
+        token_burn: total_burned {
+          amount: current
+        }
+        token_issuance: total_minted {
+          amount: current
+        }
+      }
+    }`;
   }
 
   private serialize(response: PoktScanResponse): PoktScanOutput {
