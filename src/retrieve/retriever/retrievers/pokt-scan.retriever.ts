@@ -3,12 +3,15 @@ import { BaseRetriever } from '../interfaces/common.interface';
 import {
   PoktScanOptions,
   PoktScanOutput,
+  PoktScanRecord,
   PoktScanResponse,
+  PoktScanVariables,
 } from '../interfaces/pokt-scan.interface';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { WinstonProvider } from '@common/winston/winston.provider';
+import { reduce } from 'lodash';
 
 @Injectable()
 export class PoktScanRetriever
@@ -20,7 +23,7 @@ export class PoktScanRetriever
     private readonly logger: WinstonProvider,
   ) {}
 
-  private async request(query: string, variables: Record<string, any>) {
+  private async request(query: string, variables: PoktScanVariables) {
     const response = await firstValueFrom(
       this.axios.post<PoktScanResponse>(
         this.config.get<string>('POKT_SCAN_API_BASE_URL'),
@@ -85,14 +88,53 @@ export class PoktScanRetriever
     }`;
   }
 
-  private serialize(response: PoktScanResponse): PoktScanOutput {
-    return {};
+  private reduceRecords(records: Array<PoktScanRecord>): number {
+    return reduce(
+      records,
+      (previous, current) => {
+        return previous + current.amount;
+      },
+      0,
+    );
+  }
+
+  private serializeResponse(response: PoktScanResponse): PoktScanOutput {
+    return {
+      token_burn: response.data.supply.token_burn.amount,
+      token_issuance: response.data.supply.token_issuance.amount,
+      circulating_supply: this.reduceRecords(
+        response.data.circulating_supply.records,
+      ),
+      income: this.reduceRecords(response.data.incomes.records),
+      expense: this.reduceRecords(response.data.expenses.records),
+    };
+  }
+
+  private serializeOptions(options: PoktScanOptions): PoktScanVariables {
+    return {
+      supplyInput: {
+        start_date: options.start_date,
+        date_format: options.date_format,
+        timezone: options.timezone,
+      },
+      listSummaryInput: {
+        start_date: options.start_date,
+        end_date: options.end_date,
+        date_format: options.date_format,
+        timezone: options.timezone,
+        unit_time: options.unit_time,
+        interval: options.interval,
+        exclusive_date: options.exclusive_date,
+      },
+    };
   }
 
   async retrieve(options: PoktScanOptions): Promise<PoktScanOutput> {
     const query = this.getGQLQuery();
-    const raw_metrics = await this.request(query, options);
+    const variables = this.serializeOptions(options);
 
-    return this.serialize(raw_metrics);
+    const response = await this.request(query, variables);
+
+    return this.serializeResponse(response);
   }
 }
