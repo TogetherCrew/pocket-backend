@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import {
-  CoinGeckoOptions,
   CoinGeckoOutput,
-  CoinGeckoResponse,
+  CoinGeckoPoktPriceOutput,
+  CoinGeckoPoktPriceResponse,
 } from '../interfaces/coin-gecko.interface';
 import { BaseRetriever } from '../interfaces/common.interface';
 import { ConfigService } from '@nestjs/config';
@@ -13,7 +13,7 @@ import { Method } from 'axios';
 
 @Injectable()
 export class CoinGeckoRetriever
-  implements BaseRetriever<CoinGeckoOptions, CoinGeckoOutput>
+  implements BaseRetriever<never, CoinGeckoOutput>
 {
   constructor(
     private readonly config: ConfigService,
@@ -21,14 +21,14 @@ export class CoinGeckoRetriever
     private readonly logger: WinstonProvider,
   ) {}
 
-  async request(
+  private async request<T>(
     url: string,
     method: Method,
     body?: Record<string, any>,
     query?: Record<string, any>,
-  ): Promise<CoinGeckoResponse> {
+  ) {
     const response = await firstValueFrom(
-      this.axios.request<CoinGeckoResponse>({
+      this.axios.request<T>({
         baseURL: this.config.get<string>('COIN_GECKO_API_BASE_URL'),
         url,
         method,
@@ -50,8 +50,38 @@ export class CoinGeckoRetriever
     return response.data;
   }
 
-  async retrieve(options: CoinGeckoOptions): Promise<CoinGeckoOutput> {
-    throw new Error('Method not implemented.');
-    // TODO: complete the logic
+  private async getPoktPrice() {
+    return await this.request<CoinGeckoPoktPriceResponse>(
+      'simple/price',
+      'GET',
+      undefined,
+      {
+        ids: 'pocket-network',
+        vs_currencies: 'usd',
+      },
+    );
+  }
+
+  private serializePoktPriceResponse(
+    response: CoinGeckoPoktPriceResponse,
+  ): CoinGeckoPoktPriceOutput {
+    return {
+      price: response['pocket-network'].usd,
+    };
+  }
+
+  private serializeOutput(
+    poktOutput: CoinGeckoPoktPriceOutput,
+  ): CoinGeckoOutput {
+    return {
+      pokt_price: poktOutput.price,
+    };
+  }
+
+  async retrieve(): Promise<CoinGeckoOutput> {
+    const poktPriceResponse = await this.getPoktPrice();
+    const poktPriceOutput = this.serializePoktPriceResponse(poktPriceResponse);
+
+    return this.serializeOutput(poktPriceOutput);
   }
 }
