@@ -15,7 +15,7 @@ import { AllExceptionsFilter } from '@common/filters/all-exception.filter';
     WinstonModule.forRootAsync({
       useFactory: (config: ConfigService) => {
         return {
-          level: config.get<boolean>('DEBUG_MODE') ? 'debug' : 'info',
+          level: config.get<string>('DEBUG_MODE') === 'true' ? 'debug' : 'info',
           format: format.combine(
             format.ms(),
             format.timestamp(),
