@@ -209,7 +209,7 @@ export class SnapShotRetriever
       options.spaceID,
       spaceResponse.data.space.proposalsCount,
     );
-
+    //broker
     return this.serialize(spaceResponse, votesResponse, proposalsResponse);
   }
 }
