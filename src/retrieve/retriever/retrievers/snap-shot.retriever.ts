@@ -94,7 +94,7 @@ export class SnapShotRetriever
     if (max <= 1000) {
       pages.push({ first: max, skip: 0 });
     } else {
-      const pages_count = Math.floor(max / 1000);
+      const pages_count = Math.ceil(max / 1000);
       let first = 1000;
       let skip = 0;
 
@@ -103,7 +103,7 @@ export class SnapShotRetriever
 
         pages.push({ first, skip });
 
-        skip = first;
+        skip += first;
         first = items_diff < 1000 ? items_diff : 1000;
       }
     }
