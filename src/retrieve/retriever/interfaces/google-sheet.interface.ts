@@ -5,6 +5,7 @@ export interface GoogleSheetOptions {
 }
 
 export interface GoogleSheetOutput {
+  projects_working_in_open_count: GoogleSheetSerializedValues;
   projects_count: GoogleSheetSerializedValues;
   projects_gave_update_count: GoogleSheetSerializedValues;
   projects_delivering_impact: GoogleSheetSerializedValues;
