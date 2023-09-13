@@ -1,38 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { BaseRetriever } from '../interfaces/common.interface';
 import {
   GoogleSheetOptions,
   GoogleSheetOutput,
 } from '../interfaces/google-sheet.interface';
-import { google, sheets_v4 } from 'googleapis';
-import { ConfigService } from '@nestjs/config';
+import { sheets_v4 } from 'googleapis';
 import { defaults, reduce, zipObject } from 'lodash';
 import {
   GoogleSheetSerializedValues,
   GoogleSheetColumnsName,
 } from '../types/google-sheet.type';
 import { WinstonProvider } from '@common/winston/winston.provider';
+import { GOOGLE_SHEET_SERVICE } from '../retriever.constant';
 
 @Injectable()
 export class GoogleSheetRetriever
   implements BaseRetriever<GoogleSheetOptions, GoogleSheetOutput>
 {
   constructor(
-    private readonly config: ConfigService,
     private readonly logger: WinstonProvider,
+    @Inject(GOOGLE_SHEET_SERVICE)
+    private readonly sheetService: sheets_v4.Resource$Spreadsheets,
   ) {}
 
-  private request() {
-    const service = google.sheets({
-      version: 'v4',
-      auth: this.config.get<string>('GOOGLE_SHEET_API_KEY'),
-    });
-
-    return service.spreadsheets;
-  }
-
   private async getSheets(spreadsheet_id: string) {
-    const response = await this.request().get({
+    const response = await this.sheetService.get({
       spreadsheetId: spreadsheet_id,
     });
 
@@ -70,7 +62,7 @@ export class GoogleSheetRetriever
     sheets: Array<sheets_v4.Schema$Sheet>,
   ) {
     const ranges = this.createRangesFromSheetsSchema(sheets);
-    const response = await this.request().values.batchGet({
+    const response = await this.sheetService.values.batchGet({
       spreadsheetId: spreadsheet_id,
       ranges,
     });
