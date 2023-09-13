@@ -1,7 +1,11 @@
-export interface CoinGeckoOptions {
-  // TODO: implement the interface
+export interface CoinGeckoPoktPriceResponse {
+  'pocket-network': {
+    usd: number;
+  };
 }
-
+export interface CoinGeckoPoktPriceOutput {
+  price: number;
+}
 export interface CoinGeckoOutput {
-  // TODO: implement the interface
+  pokt_price?: number;
 }
