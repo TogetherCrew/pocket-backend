@@ -16,7 +16,7 @@ import * as lodash from 'lodash';
 
 jest.mock('@common/winston/winston.provider');
 
-describe('CoinGecko Retriever', () => {
+describe('PoktScan Retriever', () => {
   let retriever: PoktScanRetriever;
   let axios: HttpService;
   let config: ConfigService;
