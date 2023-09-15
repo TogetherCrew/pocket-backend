@@ -8,6 +8,7 @@ import LokiTransport from 'winston-loki';
 import { winstonConsoleTransport } from '@common/winston/winston.utils';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from '@common/filters/all-exception.filter';
+import { DatabaseModule } from '@common/database/database.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AllExceptionsFilter } from '@common/filters/all-exception.filter';
       },
       inject: [ConfigService],
     }),
+    DatabaseModule,
     RetrieveModule,
     AnalyticsModule,
   ],
