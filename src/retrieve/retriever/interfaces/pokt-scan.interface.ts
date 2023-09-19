@@ -1,17 +1,13 @@
 interface SummaryWithBlockInput {
   start_date: string;
   end_date: string;
-  unit_time: 'block' | 'hour' | 'day' | 'week' | 'month' | 'year';
-  interval: number;
-  date_format: string;
-  timezone: string;
-  exclusive_date: boolean;
+  unit_time?: 'block' | 'hour' | 'day' | 'week' | 'month' | 'year';
+  interval?: number;
+  exclusive_date?: boolean;
 }
 
 interface GetSupplySummaryFromStartDateInput {
   start_date: string;
-  date_format: string;
-  timezone: string;
 }
 
 export interface PoktScanRecord {

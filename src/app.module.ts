@@ -35,7 +35,7 @@ import { DatabaseModule } from '@common/database/database.module';
       },
       inject: [ConfigService],
     }),
-    DatabaseModule,
+    DatabaseModule.forRoot(),
     RetrieveModule,
     AnalyticsModule,
   ],

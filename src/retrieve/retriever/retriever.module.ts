@@ -7,6 +7,7 @@ import { PoktScanRetriever } from './retrievers/pokt-scan.retriever';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { google } from 'googleapis';
+import { Retrievers } from './types/common.type';
 
 @Module({
   imports: [HttpModule],
@@ -27,7 +28,7 @@ import { google } from 'googleapis';
     PoktScanRetriever,
     {
       provide: RETRIEVERS,
-      useFactory: (...retrievers) => {
+      useFactory: (...retrievers: Retrievers) => {
         return retrievers;
       },
       inject: [

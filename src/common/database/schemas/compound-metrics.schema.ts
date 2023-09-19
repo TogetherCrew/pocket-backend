@@ -3,25 +3,19 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 export type CompoundMetricsName =
   | 'dao_treasury'
   | 'protocol_revenue'
-  | 'annualized_yield'
+  | 'annualised_yield'
   | 'coverage_ratio'
   | 'voter_participation_ratio'
-  | 'proposals_from_community_v_core_contributors'
   | 'percentage_of_projects_self_reporting'
-  | 'diff_projects_delivering_impact'
-  | 'velocity_of_experiments_v_no_debated_proposals'
   | 'dao_governance_asset_value';
 
 const CompoundMetricsNameEnum: Array<CompoundMetricsName> = [
   'dao_treasury',
   'protocol_revenue',
-  'annualized_yield',
+  'annualised_yield',
   'coverage_ratio',
   'voter_participation_ratio',
-  'proposals_from_community_v_core_contributors',
   'percentage_of_projects_self_reporting',
-  'diff_projects_delivering_impact',
-  'velocity_of_experiments_v_no_debated_proposals',
   'dao_governance_asset_value',
 ];
 

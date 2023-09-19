@@ -114,17 +114,15 @@ export class PoktScanRetriever
     return {
       supplyInput: {
         start_date: options.start_date,
-        date_format: options.date_format,
-        timezone: options.timezone,
       },
       listSummaryInput: {
         start_date: options.start_date,
         end_date: options.end_date,
-        date_format: options.date_format,
-        timezone: options.timezone,
-        unit_time: options.unit_time,
-        interval: options.interval,
-        exclusive_date: options.exclusive_date,
+        ...(options.interval && { interval: options.interval }),
+        ...(options.unit_time && { unit_time: options.unit_time }),
+        ...(options.exclusive_date && {
+          exclusive_date: options.exclusive_date,
+        }),
       },
     };
   }
