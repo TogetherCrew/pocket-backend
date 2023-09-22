@@ -14,7 +14,7 @@ import {
   SnapShotVotesResponse,
 } from '../../interfaces/snap-shot.interface';
 import { Pagination } from '../../interfaces/common.interface';
-import * as lodash from 'lodash';
+import lodash from 'lodash';
 
 jest.mock('@common/winston/winston.provider');
 

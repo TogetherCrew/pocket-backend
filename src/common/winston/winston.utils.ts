@@ -1,4 +1,4 @@
-import * as winston from 'winston';
+import winston from 'winston';
 
 const textFormat = {
   bold: (text: string) => `\x1B[1m${text}\x1B[0m`,
