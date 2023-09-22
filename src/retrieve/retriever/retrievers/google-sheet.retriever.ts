@@ -38,6 +38,9 @@ export class GoogleSheetRetriever
       GoogleSheetRetriever.name,
     );
 
+    const gg = 1
+    if (gg == 1) this.logger.error('just for test')
+
     return response.data.sheets;
   }
 
