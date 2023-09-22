@@ -54,14 +54,10 @@ describe('PoktScan Retriever', () => {
           end_date: '',
           unit_time: 'block',
           interval: 0,
-          date_format: '',
-          timezone: '',
           exclusive_date: false,
         },
         supplyInput: {
           start_date: '',
-          date_format: '',
-          timezone: '',
         },
       };
       axiosResponse = {
@@ -289,8 +285,6 @@ describe('PoktScan Retriever', () => {
         end_date: '',
         unit_time: 'block',
         interval: 1,
-        date_format: '',
-        timezone: '',
         exclusive_date: false,
       };
 
@@ -305,17 +299,12 @@ describe('PoktScan Retriever', () => {
       expect(returnValue).toEqual({
         supplyInput: {
           start_date: options.start_date,
-          date_format: options.date_format,
-          timezone: options.timezone,
         },
         listSummaryInput: {
           start_date: options.start_date,
           end_date: options.end_date,
-          date_format: options.date_format,
-          timezone: options.timezone,
           unit_time: options.unit_time,
           interval: options.interval,
-          exclusive_date: options.exclusive_date,
         },
       });
     });
@@ -335,8 +324,6 @@ describe('PoktScan Retriever', () => {
         end_date: '',
         unit_time: 'block',
         interval: 1,
-        date_format: '',
-        timezone: '',
         exclusive_date: false,
       };
       query = 'test';
@@ -346,14 +333,10 @@ describe('PoktScan Retriever', () => {
           end_date: '',
           unit_time: 'block',
           interval: 0,
-          date_format: '',
-          timezone: '',
           exclusive_date: false,
         },
         supplyInput: {
           start_date: '',
-          date_format: '',
-          timezone: '',
         },
       };
       response = {
