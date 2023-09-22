@@ -199,7 +199,7 @@ describe('GoogleSheet Retriever', () => {
       columns_name = [];
       row_values = [];
       returnFromZipObject = {
-        Date: '2023-09-01',
+        date: '2023-09-01',
         value: 'test',
       };
 
@@ -272,6 +272,7 @@ describe('GoogleSheet Retriever', () => {
       sheets = [{}];
       sheets_values = [{}];
       returnFromReduce = {
+        projects_working_in_open_count: undefined,
         projects_count: undefined,
         projects_gave_update_count: undefined,
         projects_delivering_impact: undefined,
@@ -311,6 +312,7 @@ describe('GoogleSheet Retriever', () => {
   describe('When retrieve method called', () => {
     let returnValue: GoogleSheetOutput;
     const returnFromSerialize: GoogleSheetOutput = {
+      projects_working_in_open_count: undefined,
       projects_count: undefined,
       projects_gave_update_count: undefined,
       projects_delivering_impact: undefined,
