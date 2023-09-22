@@ -16,6 +16,11 @@ jobs:
         strategy:
           matrix:
             node-version: [18.x, 20.x]
+            include:
+              - os: 18.x
+                platform: 1
+              - os: 20.x
+                platform: 2
     
         steps:
         - name: Git checkout
@@ -33,10 +38,21 @@ jobs:
           env:
             COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
           run: |
-            yarn test:cov && npx coveralls -v < coverage/lcov.info
+            yarn test:cov
             ls -la ./coverage
 
-        # - name: Coveralls
-        #   uses: coverallsapp/github-action@master
-        #   with:
-        #     github-token: ${{ secrets.GITHUB_TOKEN }}
+        - name: Coveralls Parallel
+          uses: coverallsapp/github-action@v2
+          with:
+            flag-name: run-${{ join(matrix.platform.*, '-') }}
+            parallel: true
+
+    finish:
+      needs: build
+      runs-on: ubuntu-latest
+      steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
+          carryforward: "run-1,run-2"
