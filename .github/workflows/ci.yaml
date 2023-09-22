@@ -33,7 +33,7 @@ jobs:
           env:
             COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
           run: |
-            yarn test:cov && npx coveralls -v < coverage/lcov.info
+            yarn test:cov
             ls -la ./coverage
 
         - name: Coveralls
