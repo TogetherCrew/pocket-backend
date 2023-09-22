@@ -6,12 +6,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
           matrix:
-            node-version: [18.x, 20.x]
-            include:
-              - os: 18.x
-                platform: 1
-              - os: 20.x
-                platform: 2
+            node-version: [18.x]
     
         steps:
         - name: Git checkout
@@ -32,18 +27,7 @@ jobs:
             yarn test:cov
             ls -la ./coverage
 
-        - name: Coveralls Parallel
-          uses: coverallsapp/github-action@v2
+        - name: Sending coveralls report
+          uses: coverallsapp/github-action@master
           with:
-            flag-name: run-${{ matrix.platform}}
-            parallel: true
-
-    finish:
-      needs: build
-      runs-on: ubuntu-latest
-      steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@v2
-        with:
-          parallel-finished: true
-          carryforward: "run-2"
+            github-token: ${{ secrets.GITHUB_TOKEN }}
