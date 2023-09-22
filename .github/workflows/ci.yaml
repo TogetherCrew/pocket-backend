@@ -35,3 +35,8 @@ jobs:
           run: |
             yarn test:cov && npx coveralls -v < coverage/lcov.info
             ls -la ./coverage
+
+        - name: Coveralls
+          uses: coverallsapp/github-action@master
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
