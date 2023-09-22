@@ -27,7 +27,7 @@ import { DatabaseModule } from '@common/database/database.module';
               ? [
                   new LokiTransport({
                     host: config.get<string>('GRAFANA_LOKI_HOST'),
-                    json: true,
+                    format: format.json(),
                   }),
                   winstonConsoleTransport,
                 ]
