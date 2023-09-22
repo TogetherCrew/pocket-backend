@@ -12,7 +12,7 @@ import {
   PoktScanResponse,
   PoktScanVariables,
 } from '../../interfaces/pokt-scan.interface';
-import * as lodash from 'lodash';
+import lodash from 'lodash';
 
 jest.mock('@common/winston/winston.provider');
 
