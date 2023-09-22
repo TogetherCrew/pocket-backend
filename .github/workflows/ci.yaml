@@ -35,7 +35,7 @@ jobs:
         - name: Coveralls Parallel
           uses: coverallsapp/github-action@v2
           with:
-            flag-name: run-${{ join(matrix.platform.*, '-') }}
+            flag-name: run-${{ matrix.platform}}
             parallel: true
 
     finish:
