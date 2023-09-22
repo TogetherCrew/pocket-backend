@@ -60,6 +60,22 @@ export class GoogleSheetRetriever
     return ranges;
   }
 
+  private ttangesFromSheetsSchema(
+    sheets: Array<sheets_v4.Schema$Sheet>,
+  ): Array<string> {
+    const ranges: Array<string> = [];
+
+    for (let index = 0; index < sheets.length; index++) {
+      const sheetProperties = sheets[index].properties;
+      const sheetTitle = sheetProperties.title;
+      const rowsCount = sheetProperties.gridProperties.rowCount;
+
+      ranges.push(`'${sheetTitle}'!A1:B${rowsCount}`);
+    }
+
+    return ranges;
+  }
+
   private async getSheetsValues(
     spreadsheet_id: string,
     sheets: Array<sheets_v4.Schema$Sheet>,
