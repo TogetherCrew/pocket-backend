@@ -17,10 +17,9 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
+    "esModuleInterop": true,
     "paths": {
-      "@common/*": [
-        "./src/common/*"
-      ]
+      "@common/*": ["./src/common/*"]
     }
   }
 }
