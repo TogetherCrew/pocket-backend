@@ -19,6 +19,7 @@ import { defaults, map, reduce } from 'lodash';
 import moment from 'moment';
 import { AggregationService } from './aggregation.service';
 import { StoreService } from './store.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RetrieveService {
@@ -28,6 +29,7 @@ export class RetrieveService {
     private readonly logger: WinstonProvider,
     private readonly aggregationService: AggregationService,
     private readonly storeService: StoreService,
+    private readonly config: ConfigService,
   ) {}
 
   private currentYesterdayDateTime() {
@@ -50,7 +52,7 @@ export class RetrieveService {
 
   private getGoogleSheetOptions(): GoogleSheetOptions {
     return {
-      spreadSheetID: '',
+      spreadSheetID: this.config.get<string>('GOOGLE_SPREAD_SHEET_ID'),
     };
   }
 
