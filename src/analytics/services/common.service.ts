@@ -21,7 +21,7 @@ export class CommonService {
         break;
 
       case TimePeriodEnum.YESTERDAY:
-        startMoment = moment(currentMoment).add(-1).startOf('day');
+        startMoment = moment(currentMoment).add(-1, 'day').startOf('day');
         break;
 
       case TimePeriodEnum.LAST_WEEK:
