@@ -110,42 +110,42 @@ export class RetrieveService {
 
     return {
       dao_treasury: this.aggregationService.daoTreasury(
-        outputs.poktScanOutput.income,
-        outputs.poktScanOutput.expense,
-        outputs.coinGeckoOutput.pokt_price,
+        outputs?.poktScanOutput?.income,
+        outputs?.poktScanOutput?.expense,
+        outputs?.coinGeckoOutput?.pokt_price,
       ),
       protocol_revenue: this.aggregationService.protocolRevenue(
-        outputs.poktScanOutput.token_burn,
-        outputs.coinGeckoOutput.pokt_price,
+        outputs?.poktScanOutput?.token_burn,
+        outputs?.coinGeckoOutput?.pokt_price,
       ),
       get annualised_yield() {
         return aggregationServiceProxy.annualisedYield(
           this.protocol_revenue,
-          outputs.poktScanOutput.circulating_supply,
+          outputs?.poktScanOutput?.circulating_supply,
         );
       },
       get coverage_ratio() {
         return aggregationServiceProxy.coverageRatio(
           this.protocol_revenue,
-          outputs.poktScanOutput.token_issuance,
+          outputs?.poktScanOutput?.token_issuance,
         );
       },
       voter_participation_ratio:
         this.aggregationService.voterParticipationRatio(
-          outputs.snapShotOutput.votes_count,
-          outputs.snapShotOutput.voters_count,
+          outputs?.snapShotOutput?.votes_count,
+          outputs?.snapShotOutput?.voters_count,
         ),
       percentage_of_projects_self_reporting:
         this.aggregationService.percentageOfProjectsSelfReporting(
           'date',
-          outputs.googleSheetOutput.projects_gave_update_count.value,
-          outputs.googleSheetOutput.projects_count.value,
+          outputs?.googleSheetOutput?.projects_gave_update_count.value,
+          outputs?.googleSheetOutput?.projects_count.value,
         ),
       get dao_governance_asset_value() {
         return aggregationServiceProxy.daoGovernanceAssetValue(
           this.voter_participation_ratio,
           this.dao_treasury,
-          outputs.googleSheetOutput.voter_power_concentration_index.value,
+          outputs?.googleSheetOutput?.voter_power_concentration_index.value,
         );
       },
     };
