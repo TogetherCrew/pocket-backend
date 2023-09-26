@@ -60,6 +60,7 @@ export class RetrieveService {
     return {
       start_date: this.startOfYesterday(),
       end_date: this.endOfYesterday(),
+      date_format: 'YYYY-MM-DDTHH:mm:ss.SSSZ',
       unit_time: 'day',
       interval: 1,
     };
