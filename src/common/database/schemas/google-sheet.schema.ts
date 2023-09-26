@@ -32,7 +32,6 @@ const GoogleSheetMetricsNameEnum: Array<GoogleSheetMetricsName> = [
 ];
 
 @Schema({
-  _id: false,
   versionKey: false,
   timestamps: false,
   collection: GoogleSheet.name,

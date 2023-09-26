@@ -20,7 +20,6 @@ const CompoundMetricsNameEnum: Array<CompoundMetricsName> = [
 ];
 
 @Schema({
-  _id: false,
   versionKey: false,
   timestamps: false,
   collection: CompoundMetrics.name,
