@@ -78,10 +78,10 @@ export class GovernanceService {
     return {
       metrics: {
         DAO_governance_asset_value: {
-          values: serializedMetrics['dao_governance_asset_value'],
+          values: serializedMetrics['dao_governance_asset_value'] || [],
         },
         DAO_treasury: {
-          values: serializedMetrics['dao_treasury'],
+          values: serializedMetrics['dao_treasury'] || [],
         },
       },
     };

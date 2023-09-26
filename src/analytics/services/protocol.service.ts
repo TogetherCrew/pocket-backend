@@ -29,7 +29,9 @@ export class ProtocolService {
       })
       .sort({ date: -1 });
 
-    const v1MainnetLaunchDate = String(latestMetric.metric_value);
+    const v1MainnetLaunchDate = latestMetric
+      ? String(latestMetric.metric_value)
+      : undefined;
 
     return {
       metrics: {

@@ -115,10 +115,10 @@ export class CommunityService {
           change: ecosystemProjectsDeliveringImpact.change,
         },
         pocket_network_DNA_NPS: {
-          values: serializedNPSMetrics['pocket_network_DNA_NPS'],
+          values: serializedNPSMetrics['pocket_network_DNA_NPS'] || [],
         },
         community_NPS: {
-          values: serializedNPSMetrics['community_NPS'],
+          values: serializedNPSMetrics['community_NPS'] || [],
         },
       },
     };
