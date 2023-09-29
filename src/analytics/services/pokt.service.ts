@@ -28,13 +28,15 @@ export class PoktService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const googleMetrics = await this.googleModel.find({
-      metric_name: 'pokt_liquidity_amount',
-      date: {
-        $gte: new Date(dateTimeRange.start),
-        $lte: new Date(dateTimeRange.end),
-      },
-    });
+    const googleMetrics = await this.googleModel
+      .find({
+        metric_name: 'pokt_liquidity_amount',
+        date: {
+          $gte: new Date(dateTimeRange.start),
+          $lte: new Date(dateTimeRange.end),
+        },
+      })
+      .sort({ date: 1 });
 
     return {
       metrics: {
@@ -52,13 +54,15 @@ export class PoktService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const compoundMetrics = await this.compoundModel.find({
-      metric_name: 'coverage_ratio',
-      date: {
-        $gte: new Date(dateTimeRange.start),
-        $lte: new Date(dateTimeRange.end),
-      },
-    });
+    const compoundMetrics = await this.compoundModel
+      .find({
+        metric_name: 'coverage_ratio',
+        date: {
+          $gte: new Date(dateTimeRange.start),
+          $lte: new Date(dateTimeRange.end),
+        },
+      })
+      .sort({ date: 1 });
 
     return {
       metrics: {
@@ -76,13 +80,15 @@ export class PoktService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const compoundMetrics = await this.compoundModel.find({
-      metric_name: 'annualised_yield',
-      date: {
-        $gte: new Date(dateTimeRange.start),
-        $lte: new Date(dateTimeRange.end),
-      },
-    });
+    const compoundMetrics = await this.compoundModel
+      .find({
+        metric_name: 'annualised_yield',
+        date: {
+          $gte: new Date(dateTimeRange.start),
+          $lte: new Date(dateTimeRange.end),
+        },
+      })
+      .sort({ date: 1 });
 
     return {
       metrics: {

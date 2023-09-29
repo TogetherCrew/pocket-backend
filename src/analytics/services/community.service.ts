@@ -84,20 +84,24 @@ export class CommunityService {
       this.commonService.lastTwoMonthsCycleRanges();
 
     const [NPSMetrics, deliveringImpactMetricValues] = await Promise.all([
-      this.googleModel.find({
-        metric_name: { $in: ['pocket_network_DNA_NPS', 'community_NPS'] },
-        date: {
-          $gte: new Date(dateTimeRange.start),
-          $lte: new Date(dateTimeRange.end),
-        },
-      }),
-      this.googleModel.find({
-        metric_name: 'projects_delivering_impact',
-        date: {
-          $gte: new Date(lastTwoMonthsCycleRanges.previous.start),
-          $lte: new Date(lastTwoMonthsCycleRanges.current.end),
-        },
-      }),
+      this.googleModel
+        .find({
+          metric_name: { $in: ['pocket_network_DNA_NPS', 'community_NPS'] },
+          date: {
+            $gte: new Date(dateTimeRange.start),
+            $lte: new Date(dateTimeRange.end),
+          },
+        })
+        .sort({ date: 1 }),
+      this.googleModel
+        .find({
+          metric_name: 'projects_delivering_impact',
+          date: {
+            $gte: new Date(lastTwoMonthsCycleRanges.previous.start),
+            $lte: new Date(lastTwoMonthsCycleRanges.current.end),
+          },
+        })
+        .sort({ date: 1 }),
     ]);
 
     const ecosystemProjectsDeliveringImpact =
@@ -130,13 +134,15 @@ export class CommunityService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const metrics = await this.googleModel.find({
-      metric_name: 'twitter_followers_count',
-      date: {
-        $gte: new Date(dateTimeRange.start),
-        $lte: new Date(dateTimeRange.end),
-      },
-    });
+    const metrics = await this.googleModel
+      .find({
+        metric_name: 'twitter_followers_count',
+        date: {
+          $gte: new Date(dateTimeRange.start),
+          $lte: new Date(dateTimeRange.end),
+        },
+      })
+      .sort({ date: 1 });
 
     return {
       metrics: {
@@ -156,20 +162,24 @@ export class CommunityService {
       this.commonService.dateTimeRangeFromTimePeriod('last-month');
 
     const [googleMetrics, compoundMetrics] = await Promise.all([
-      this.googleModel.find({
-        metric_name: 'projects_working_in_open_count',
-        date: {
-          $gte: new Date(dateTimeRange.start),
-          $lte: new Date(dateTimeRange.end),
-        },
-      }),
-      this.compoundModel.find({
-        metric_name: 'percentage_of_projects_self_reporting',
-        date: {
-          $gte: new Date(lastMonthRange.start),
-          $lte: new Date(lastMonthRange.end),
-        },
-      }),
+      this.googleModel
+        .find({
+          metric_name: 'projects_working_in_open_count',
+          date: {
+            $gte: new Date(dateTimeRange.start),
+            $lte: new Date(dateTimeRange.end),
+          },
+        })
+        .sort({ date: 1 }),
+      this.compoundModel
+        .find({
+          metric_name: 'percentage_of_projects_self_reporting',
+          date: {
+            $gte: new Date(lastMonthRange.start),
+            $lte: new Date(lastMonthRange.end),
+          },
+        })
+        .sort({ date: 1 }),
     ]);
 
     return {
@@ -192,15 +202,17 @@ export class CommunityService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const googleMetrics = await this.googleModel.find({
-      metric_name: {
-        $in: ['velocity_of_experiments', 'no_debated_proposals_count'],
-      },
-      date: {
-        $gte: new Date(dateTimeRange.start),
-        $lte: new Date(dateTimeRange.end),
-      },
-    });
+    const googleMetrics = await this.googleModel
+      .find({
+        metric_name: {
+          $in: ['velocity_of_experiments', 'no_debated_proposals_count'],
+        },
+        date: {
+          $gte: new Date(dateTimeRange.start),
+          $lte: new Date(dateTimeRange.end),
+        },
+      })
+      .sort({ date: 1 });
 
     return {
       metrics: {

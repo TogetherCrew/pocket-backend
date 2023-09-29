@@ -40,22 +40,26 @@ export class GovernanceService {
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
     const [googleMetrics, poktMetrics] = await Promise.all([
-      this.googleModel.find({
-        metric_name: 'voters_to_control_DAO_count',
-        date: {
-          $gte: new Date(dateTimeRange.start),
-          $lte: new Date(dateTimeRange.end),
-        },
-      }),
-      this.poktscanModel.find(
-        {
+      this.googleModel
+        .find({
+          metric_name: 'voters_to_control_DAO_count',
           date: {
             $gte: new Date(dateTimeRange.start),
             $lte: new Date(dateTimeRange.end),
           },
-        },
-        ['date', 'validators_to_control_protocol_count'],
-      ),
+        })
+        .sort({ date: 1 }),
+      this.poktscanModel
+        .find(
+          {
+            date: {
+              $gte: new Date(dateTimeRange.start),
+              $lte: new Date(dateTimeRange.end),
+            },
+          },
+          ['date', 'validators_to_control_protocol_count'],
+        )
+        .sort({ date: 1 }),
     ]);
 
     const validatorsToControlProtocolValues: Array<BarChartMetricValue> = map(
@@ -87,13 +91,15 @@ export class GovernanceService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const metrics = await this.compoundModel.find({
-      metric_name: { $in: ['dao_treasury', 'dao_governance_asset_value'] },
-      date: {
-        $gte: new Date(dateTimeRange.start),
-        $lte: new Date(dateTimeRange.end),
-      },
-    });
+    const metrics = await this.compoundModel
+      .find({
+        metric_name: { $in: ['dao_treasury', 'dao_governance_asset_value'] },
+        date: {
+          $gte: new Date(dateTimeRange.start),
+          $lte: new Date(dateTimeRange.end),
+        },
+      })
+      .sort({ date: 1 });
 
     const serializedMetrics =
       this.commonService.serializeToBarChartMetricsValues(metrics);
@@ -116,15 +122,17 @@ export class GovernanceService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const snapshotMetrics = await this.snapshotModel.find(
-      {
-        date: {
-          $gte: new Date(dateTimeRange.start),
-          $lte: new Date(dateTimeRange.end),
+    const snapshotMetrics = await this.snapshotModel
+      .find(
+        {
+          date: {
+            $gte: new Date(dateTimeRange.start),
+            $lte: new Date(dateTimeRange.end),
+          },
         },
-      },
-      ['date', 'community_proposals_count', 'core_proposals_count'],
-    );
+        ['date', 'community_proposals_count', 'core_proposals_count'],
+      )
+      .sort({ date: 1 });
 
     const proposalsFromCommunityVCoreContributors: Array<StackedChartMetricValue> =
       map(snapshotMetrics, (metric) => {

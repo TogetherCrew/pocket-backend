@@ -48,13 +48,15 @@ export class ProtocolService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const CompoundMetrics = await this.compoundModel.find({
-      metric_name: 'protocol_revenue',
-      date: {
-        $gte: new Date(dateTimeRange.start),
-        $lte: new Date(dateTimeRange.end),
-      },
-    });
+    const CompoundMetrics = await this.compoundModel
+      .find({
+        metric_name: 'protocol_revenue',
+        date: {
+          $gte: new Date(dateTimeRange.start),
+          $lte: new Date(dateTimeRange.end),
+        },
+      })
+      .sort({ date: 1 });
 
     const datesInRange = this.commonService.enumerateDaysBetweenRange(
       dateTimeRange.start,
