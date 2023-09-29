@@ -11,6 +11,7 @@ import {
   PoktScanOptions,
   PoktScanOutput,
   PoktScanRecord,
+  PoktScanStackedNodesResponse,
   PoktScanSupplyResponse,
   PoktScanSupplyVariables,
 } from '../../interfaces/pokt-scan.interface';
@@ -259,12 +260,24 @@ describe('PoktScan Retriever', () => {
       },
     };
 
+    const nodesResponse: PoktScanStackedNodesResponse = {
+      data: {
+        stackedNodes: {
+          chains: [{ nodes_count: 100 }],
+        },
+      },
+    };
+
     beforeEach(() => {
       jest.spyOn(retriever as any, 'reduceRecords').mockReturnValueOnce(3.0);
       jest.spyOn(retriever as any, 'reduceRecords').mockReturnValueOnce(1.0);
       jest.spyOn(retriever as any, 'reduceRecords').mockReturnValueOnce(2.0);
 
-      returnValue = retriever['serializeResponse'](daoResponse, supplyResponse);
+      returnValue = retriever['serializeResponse'](
+        daoResponse,
+        supplyResponse,
+        nodesResponse,
+      );
     });
 
     test('Should be defined', () => {
@@ -290,6 +303,7 @@ describe('PoktScan Retriever', () => {
         circulating_supply: 3.0,
         income: 1.0,
         expense: 2.0,
+        validators_to_control_protocol_count: 66,
       });
     });
   });

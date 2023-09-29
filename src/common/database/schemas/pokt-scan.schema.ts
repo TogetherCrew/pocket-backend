@@ -23,6 +23,9 @@ export class PoktScan {
 
   @Prop()
   circulating_supply: number;
+
+  @Prop()
+  validators_to_control_protocol_count: number;
 }
 
 export const PoktScanSchema = SchemaFactory.createForClass(PoktScan);

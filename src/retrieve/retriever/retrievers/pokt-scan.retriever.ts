@@ -6,6 +6,7 @@ import {
   PoktScanOptions,
   PoktScanOutput,
   PoktScanRecord,
+  PoktScanStackedNodesResponse,
   PoktScanSupplyResponse,
   PoktScanSupplyVariables,
 } from '../interfaces/pokt-scan.interface';
@@ -24,7 +25,7 @@ export class PoktScanRetriever
     private readonly logger: WinstonProvider,
   ) {}
 
-  private async request<T>(query: string, variables: Record<string, any>) {
+  private async request<T>(query: string, variables?: Record<string, any>) {
     const response = await firstValueFrom(
       this.axios.post<T>(
         this.config.get<string>('POKT_SCAN_API_BASE_URL'),
@@ -95,6 +96,17 @@ export class PoktScanRetriever
     }`;
   }
 
+  private getStackedNodesGQLQuery(): string {
+    return `
+    query {
+      stackedNodes: GetStakedNodesAndAppsByChain(input: {}) {
+        chains: staked_by_chains {
+          nodes_count: nodes    
+        }
+      }
+    }`;
+  }
+
   private reduceRecords(records: Array<PoktScanRecord>): number {
     return reduce(
       records,
@@ -117,9 +129,34 @@ export class PoktScanRetriever
     return this.request<PoktScanSupplyResponse>(query, variables);
   }
 
+  private async getStackedNodesProps() {
+    const query = this.getStackedNodesGQLQuery();
+
+    return this.request<PoktScanStackedNodesResponse>(query);
+  }
+
+  private calculateValidatorsCountToControlProtocol(
+    chains: Array<{ nodes_count: number }>,
+  ): number {
+    const nodes_count = reduce(
+      chains,
+      (previous, current) => {
+        return previous + current.nodes_count;
+      },
+      0,
+    );
+
+    if (nodes_count >= 1000) {
+      return 660;
+    } else {
+      return Math.ceil(nodes_count * 0.66);
+    }
+  }
+
   private serializeResponse(
     DAO_treasury_response: PoktScanDAOTreasuryResponse,
     supply_response: PoktScanSupplyResponse,
+    stacked_nodes_response: PoktScanStackedNodesResponse,
   ): PoktScanOutput {
     return {
       token_burn: supply_response.data.supply.token_burn.amount,
@@ -129,6 +166,10 @@ export class PoktScanRetriever
       ),
       income: this.reduceRecords(DAO_treasury_response.data.incomes.records),
       expense: this.reduceRecords(DAO_treasury_response.data.expenses.records),
+      validators_to_control_protocol_count:
+        this.calculateValidatorsCountToControlProtocol(
+          stacked_nodes_response.data.stackedNodes.chains,
+        ),
     };
   }
 
@@ -172,13 +213,19 @@ export class PoktScanRetriever
 
   async retrieve(options: PoktScanOptions): Promise<PoktScanOutput> {
     const DAOTreasuryVariables = this.serializeDAOTreasuryVariables(options);
-    const DAOTreasuryResponse = await this.getDAOTreasuryProps(
-      DAOTreasuryVariables,
-    );
-
     const supplyVariables = this.serializeSupplyVariables(options);
-    const supplyResponse = await this.getSupplyProps(supplyVariables);
 
-    return this.serializeResponse(DAOTreasuryResponse, supplyResponse);
+    const [DAOTreasuryResponse, supplyResponse, stackedNodesResponse] =
+      await Promise.all([
+        this.getDAOTreasuryProps(DAOTreasuryVariables),
+        this.getSupplyProps(supplyVariables),
+        this.getStackedNodesProps(),
+      ]);
+
+    return this.serializeResponse(
+      DAOTreasuryResponse,
+      supplyResponse,
+      stackedNodesResponse,
+    );
   }
 }
