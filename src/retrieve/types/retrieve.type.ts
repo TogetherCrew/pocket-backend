@@ -5,7 +5,7 @@ import { PoktScanOutput } from '../retriever/interfaces/pokt-scan.interface';
 import { SnapShotOutput } from '../retriever/interfaces/snap-shot.interface';
 import { RetrieverOutput } from '../retriever/types/common.type';
 
-export type Outputs = {
+export type EssentialMetricsOutputs = {
   [key in
     | 'coinGeckoOutput'
     | 'poktScanOutput'

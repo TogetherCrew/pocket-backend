@@ -42,12 +42,22 @@ export interface PoktScanSupplyResponse {
     };
   };
 }
+export interface PoktScanStackedNodesResponse {
+  data: {
+    stackedNodes: {
+      chains: Array<{
+        nodes_count: number;
+      }>;
+    };
+  };
+}
 export interface PoktScanOutput {
   income: number;
   expense: number;
   token_burn: number;
   token_issuance: number;
   circulating_supply: number;
+  validators_to_control_protocol_count: number;
 }
 export interface PoktScanDAOTreasuryVariables {
   listSummaryInput: SummaryWithBlockInput;
