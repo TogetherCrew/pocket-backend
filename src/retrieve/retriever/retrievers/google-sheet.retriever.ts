@@ -5,7 +5,7 @@ import {
   GoogleSheetOutput,
 } from '../interfaces/google-sheet.interface';
 import { sheets_v4 } from 'googleapis';
-import { defaults, reduce, zipObject } from 'lodash';
+import { defaults, isNaN, map, reduce, toNumber, zipObject } from 'lodash';
 import {
   GoogleSheetSerializedValues,
   GoogleSheetColumnsName,
@@ -94,7 +94,24 @@ export class GoogleSheetRetriever
   private latestRow(sheet_values: any[][]): Array<any> {
     const latestRowIndex = sheet_values.length - 1;
 
-    return sheet_values[latestRowIndex];
+    if (latestRowIndex >= 1) {
+      const latestRowValues = map(
+        sheet_values[latestRowIndex],
+        (value: string) => {
+          const trimmedValue = value.trim();
+
+          if (!isNaN(+trimmedValue)) {
+            return toNumber(trimmedValue);
+          } else {
+            return trimmedValue;
+          }
+        },
+      );
+
+      return latestRowValues;
+    } else {
+      return [];
+    }
   }
 
   private serialize(
