@@ -105,6 +105,7 @@ export class RetrieveService {
   }
 
   private calculateCompoundMetricsOutput(
+    date: string,
     outputs: Outputs,
   ): CompoundMetricsOutput {
     const aggregationServiceProxy = this.aggregationService;
@@ -138,9 +139,9 @@ export class RetrieveService {
         ),
       percentage_of_projects_self_reporting:
         this.aggregationService.percentageOfProjectsSelfReporting(
-          'date',
-          outputs?.googleSheetOutput?.projects_gave_update_count.value,
-          outputs?.googleSheetOutput?.projects_count.value,
+          date,
+          outputs?.googleSheetOutput?.projects_gave_update_count,
+          outputs?.googleSheetOutput?.projects_count,
         ),
       get dao_governance_asset_value() {
         return aggregationServiceProxy.daoGovernanceAssetValue(
@@ -195,9 +196,21 @@ export class RetrieveService {
         {} as Outputs,
       );
 
+      this.logger.debug(
+        `Essential metrics: ${JSON.stringify(outputs)}`,
+        RetrieveService.name,
+      );
+
       // Calculate compound metrics output
-      const compoundMetricsOutput =
-        this.calculateCompoundMetricsOutput(outputs);
+      const compoundMetricsOutput = this.calculateCompoundMetricsOutput(
+        checkingDateTime,
+        outputs,
+      );
+
+      this.logger.debug(
+        `Compound metrics: ${JSON.stringify(compoundMetricsOutput)}`,
+        RetrieveService.name,
+      );
 
       // Store essential and compound metrics
       await Promise.all([
