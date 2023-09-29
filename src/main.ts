@@ -15,7 +15,7 @@ async function bootstrap() {
     configuredOrigins?.length > 0 ? configuredOrigins : undefined,
     (origin) => {
       if (origin.startsWith('/') && origin.endsWith('/')) {
-        return new RegExp(origin);
+        return new RegExp(origin.slice(1, origin.length - 1));
       } else {
         return origin;
       }
