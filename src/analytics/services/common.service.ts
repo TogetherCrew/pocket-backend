@@ -40,11 +40,6 @@ export class CommonService {
         throw new Error('Time period has an invalid value');
     }
 
-    console.log({
-      start: startMoment.toISOString(),
-      end: currentMoment.toISOString(),
-    });
-
     return {
       start: startMoment.toISOString(),
       end: currentMoment.toISOString(),
