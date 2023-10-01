@@ -21,24 +21,29 @@ export class CommonService {
         break;
 
       case TimePeriodEnum.YESTERDAY:
-        startMoment = moment(currentMoment).add(-1, 'day').startOf('day');
+        startMoment = moment(currentMoment).add(-1, 'day');
         break;
 
       case TimePeriodEnum.LAST_WEEK:
-        startMoment = moment(currentMoment).startOf('week');
+        startMoment = moment(currentMoment).add(-1, 'week');
         break;
 
       case TimePeriodEnum.LAST_MONTH:
-        startMoment = moment(currentMoment).startOf('month');
+        startMoment = moment(currentMoment).add(-1, 'month');
         break;
 
       case TimePeriodEnum.LAST_YEAR:
-        startMoment = moment(currentMoment).startOf('year');
+        startMoment = moment(currentMoment).add(-1, 'year');
         break;
 
       default:
         throw new Error('Time period has an invalid value');
     }
+
+    console.log({
+      start: startMoment.toISOString(),
+      end: currentMoment.toISOString(),
+    });
 
     return {
       start: startMoment.toISOString(),
