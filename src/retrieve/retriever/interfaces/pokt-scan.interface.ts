@@ -20,17 +20,17 @@ export interface PoktScanRecord {
 export interface PoktScanDAOTreasuryResponse {
   data: {
     incomes: {
-      records: Array<PoktScanRecord>;
+      points: Array<PoktScanRecord>;
     };
     expenses: {
-      records: Array<PoktScanRecord>;
+      points: Array<PoktScanRecord>;
     };
   };
 }
 export interface PoktScanSupplyResponse {
   data: {
     circulating_supply: {
-      records: Array<PoktScanRecord>;
+      points: Array<PoktScanRecord>;
     };
     supply: {
       token_burn: {

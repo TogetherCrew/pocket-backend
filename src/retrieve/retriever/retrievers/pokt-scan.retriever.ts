@@ -108,13 +108,13 @@ export class PoktScanRetriever
   }
 
   private reduceRecords(records: Array<PoktScanRecord>): number {
-    return reduce(
-      records,
-      (previous, current) => {
-        return previous + current.amount;
-      },
-      0,
-    );
+    let finalValue = 0;
+
+    for (let index = 0; index < records.length; index++) {
+      finalValue += records[index].amount;
+    }
+
+    return finalValue;
   }
 
   private async getDAOTreasuryProps(variables: PoktScanDAOTreasuryVariables) {
@@ -162,10 +162,10 @@ export class PoktScanRetriever
       token_burn: supply_response.data.supply.token_burn.amount,
       token_issuance: supply_response.data.supply.token_issuance.amount,
       circulating_supply: this.reduceRecords(
-        supply_response.data.circulating_supply.records,
+        supply_response.data.circulating_supply.points,
       ),
-      income: this.reduceRecords(DAO_treasury_response.data.incomes.records),
-      expense: this.reduceRecords(DAO_treasury_response.data.expenses.records),
+      income: this.reduceRecords(DAO_treasury_response.data.incomes.points),
+      expense: this.reduceRecords(DAO_treasury_response.data.expenses.points),
       validators_to_control_protocol_count:
         this.calculateValidatorsCountToControlProtocol(
           stacked_nodes_response.data.stackedNodes.chains,

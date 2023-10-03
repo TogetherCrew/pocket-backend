@@ -67,7 +67,7 @@ describe('PoktScan Retriever', () => {
         data: {
           data: {
             circulating_supply: {
-              records: [],
+              points: [],
             },
             supply: {
               token_burn: {
@@ -236,7 +236,7 @@ describe('PoktScan Retriever', () => {
     const supplyResponse: PoktScanSupplyResponse = {
       data: {
         circulating_supply: {
-          records: [{ point: '', amount: 3.0 }],
+          points: [{ point: '', amount: 3.0 }],
         },
         supply: {
           token_burn: {
@@ -252,10 +252,10 @@ describe('PoktScan Retriever', () => {
     const daoResponse: PoktScanDAOTreasuryResponse = {
       data: {
         incomes: {
-          records: [{ point: '', amount: 1.0 }],
+          points: [{ point: '', amount: 1.0 }],
         },
         expenses: {
-          records: [{ point: '', amount: 2.0 }],
+          points: [{ point: '', amount: 2.0 }],
         },
       },
     };
@@ -286,9 +286,9 @@ describe('PoktScan Retriever', () => {
 
     test.each`
       property                | source
-      ${'circulating_supply'} | ${supplyResponse.data.circulating_supply.records}
-      ${'income'}             | ${daoResponse.data.incomes.records}
-      ${'expense'}            | ${daoResponse.data.expenses.records}
+      ${'circulating_supply'} | ${supplyResponse.data.circulating_supply.points}
+      ${'income'}             | ${daoResponse.data.incomes.points}
+      ${'expense'}            | ${daoResponse.data.expenses.points}
     `(
       'Should call reduceRecords method from retriever for $property',
       ({ source }) => {
