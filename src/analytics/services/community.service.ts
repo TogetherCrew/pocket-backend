@@ -68,10 +68,14 @@ export class CommunityService {
       }
     }
 
+    const changeCycleDeliveringImpactAvg =
+      (currentCycleDeliveringImpactAvg - previousCycleDeliveringImpactAvg) /
+      currentCycleDeliveringImpactAvg;
+
     return {
       value: currentCycleDeliveringImpactAvg,
-      change:
-        currentCycleDeliveringImpactAvg / previousCycleDeliveringImpactAvg || 0,
+      previous: previousCycleDeliveringImpactAvg,
+      change: changeCycleDeliveringImpactAvg || 0,
     };
   }
 

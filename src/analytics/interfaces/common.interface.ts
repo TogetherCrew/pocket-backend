@@ -18,6 +18,7 @@ export interface StringTypeMetricResponse {
 
 export interface NumberTypeMetricResponse {
   value: number;
+  previous?: number;
   change?: number;
 }
 
