@@ -57,16 +57,9 @@ export class PoktScanRetriever
 
   private getDAOTreasuryGQLQuery(): string {
     return `
-    query ($listSummaryInput: SummaryWithBlockInput!) {
-      incomes: ListSummaryBetweenDates(input: $listSummaryInput) {
-        points {
-          point
-          amount: total_dao_rewards
-        }
-      }
-      expenses: ListDaoExpensesBetweenDates(input: $listSummaryInput) {
-        points {
-          point
+    query daoTreasury($pagination: ListInput) {
+      DAO_total_balance: ListPoktAccount(pagination: $pagination) {
+        items {
           amount
         }
       }
@@ -107,7 +100,7 @@ export class PoktScanRetriever
     }`;
   }
 
-  private reduceRecords(records: Array<PoktScanRecord>): number {
+  private reduceRecords(records: Array<Partial<PoktScanRecord>>): number {
     let finalValue = 0;
 
     for (let index = 0; index < records.length; index++) {
@@ -153,19 +146,28 @@ export class PoktScanRetriever
     }
   }
 
+  private serializeFloatValue(amount: number): number {
+    return amount / 1000000;
+  }
+
   private serializeResponse(
     DAO_treasury_response: PoktScanDAOTreasuryResponse,
     supply_response: PoktScanSupplyResponse,
     stacked_nodes_response: PoktScanStackedNodesResponse,
   ): PoktScanOutput {
     return {
-      token_burn: supply_response.data.supply.token_burn.amount,
-      token_issuance: supply_response.data.supply.token_issuance.amount,
-      circulating_supply: this.reduceRecords(
-        supply_response.data.circulating_supply.points,
+      DAO_total_balance: this.serializeFloatValue(
+        this.reduceRecords(DAO_treasury_response.data.DAO_total_balance.items),
       ),
-      income: this.reduceRecords(DAO_treasury_response.data.incomes.points),
-      expense: this.reduceRecords(DAO_treasury_response.data.expenses.points),
+      token_burn: this.serializeFloatValue(
+        supply_response.data.supply.token_burn.amount,
+      ),
+      token_issuance: this.serializeFloatValue(
+        supply_response.data.supply.token_issuance.amount,
+      ),
+      circulating_supply: this.serializeFloatValue(
+        this.reduceRecords(supply_response.data.circulating_supply.points),
+      ),
       validators_to_control_protocol_count:
         this.calculateValidatorsCountToControlProtocol(
           stacked_nodes_response.data.stackedNodes.chains,
@@ -177,16 +179,7 @@ export class PoktScanRetriever
     options: PoktScanOptions,
   ): PoktScanDAOTreasuryVariables {
     return {
-      listSummaryInput: {
-        start_date: options.start_date,
-        end_date: options.end_date,
-        date_format: options.date_format,
-        ...(options.interval && { interval: options.interval }),
-        ...(options.unit_time && { unit_time: options.unit_time }),
-        ...(options.exclusive_date && {
-          exclusive_date: options.exclusive_date,
-        }),
-      },
+      pagination: options.pagination,
     };
   }
 

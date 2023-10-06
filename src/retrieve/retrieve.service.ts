@@ -63,6 +63,26 @@ export class RetrieveService {
       date_format: 'YYYY-MM-DDTHH:mm:ss.SSSZ',
       unit_time: 'day',
       interval: 1,
+      pagination: {
+        filter: {
+          operator: 'AND',
+          properties: [
+            {
+              operator: 'IN',
+              property: 'address',
+              type: 'STRING',
+              value: '["6386713deb27b609daad5e2e32ee6591753e5f4e"]',
+            },
+            {
+              operator: 'GTE',
+              property: 'parse_time',
+              type: 'DATE',
+              value: this.startOfYesterday(),
+            },
+          ],
+        },
+        limit: 1,
+      },
     };
   }
 
@@ -112,8 +132,7 @@ export class RetrieveService {
 
     return {
       dao_treasury: this.aggregationService.daoTreasury(
-        essentialMetricsOutputs?.poktScanOutput?.income,
-        essentialMetricsOutputs?.poktScanOutput?.expense,
+        essentialMetricsOutputs?.poktScanOutput?.DAO_total_balance,
         essentialMetricsOutputs?.coinGeckoOutput?.pokt_price,
       ),
       protocol_revenue: this.aggregationService.protocolRevenue(

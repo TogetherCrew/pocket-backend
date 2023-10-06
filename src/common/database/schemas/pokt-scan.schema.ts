@@ -10,10 +10,7 @@ export class PoktScan {
   date: Date;
 
   @Prop()
-  income: number;
-
-  @Prop()
-  expense: number;
+  DAO_total_balance: number;
 
   @Prop()
   token_burn: number;

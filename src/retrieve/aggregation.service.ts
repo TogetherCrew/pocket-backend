@@ -5,9 +5,9 @@ import { every, isUndefined } from 'lodash';
 
 @Injectable()
 export class AggregationService {
-  daoTreasury(income: number, expense: number, pokt_price: number) {
-    return every([income, expense, pokt_price], (item) => !isUndefined(item))
-      ? (income - expense) * pokt_price
+  daoTreasury(DAO_total_balance: number, pokt_price: number) {
+    return every([DAO_total_balance, pokt_price], (item) => !isUndefined(item))
+      ? DAO_total_balance * pokt_price
       : undefined;
   }
 
