@@ -10,7 +10,6 @@ export interface GoogleSheetOutput {
   projects_gave_update_count: GoogleSheetSerializedValues;
   projects_delivering_impact: GoogleSheetSerializedValues;
   velocity_of_experiments: GoogleSheetSerializedValues;
-  no_debated_proposals_count: GoogleSheetSerializedValues;
   pocket_network_DNA_NPS: GoogleSheetSerializedValues;
   v1_mainnet_launch_date: GoogleSheetSerializedValues;
   voters_to_control_DAO_count: GoogleSheetSerializedValues;

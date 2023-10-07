@@ -7,6 +7,8 @@ import { Model } from 'mongoose';
 import {
   CycleRanges,
   NumberTypeMetricResponse,
+  StackedBarValue,
+  StackedChartMetricValue,
 } from '../interfaces/common.interface';
 import { CompoundMetrics } from '@common/database/schemas/compound-metrics.schema';
 import moment from 'moment';
@@ -16,6 +18,8 @@ import {
   CommunityCollaborationMetricsResponse,
   TransparencyMetricsResponse,
 } from '../types/community.type';
+import { SnapShot } from '@common/database/schemas/snap-shot.schema';
+import { mergeWith } from 'lodash';
 
 @Injectable()
 export class CommunityService {
@@ -26,6 +30,8 @@ export class CommunityService {
     private readonly googleModel: Model<GoogleSheet>,
     @InjectModel(CompoundMetrics.name)
     private readonly compoundModel: Model<CompoundMetrics>,
+    @InjectModel(SnapShot.name)
+    private readonly snapShotModel: Model<SnapShot>,
   ) {}
 
   private calculateProjectsDeliveringImpactProps<T>(
@@ -206,25 +212,96 @@ export class CommunityService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const googleMetrics = await this.googleModel
-      .find({
-        metric_name: {
-          $in: ['velocity_of_experiments', 'no_debated_proposals_count'],
+    const [googleMetric, snapShotMetric] = await Promise.all([
+      this.googleModel
+        .find({
+          metric_name: {
+            $in: ['velocity_of_experiments'],
+          },
+          date: {
+            $gte: new Date(dateTimeRange.start),
+            $lte: new Date(dateTimeRange.end),
+          },
+        })
+        .sort({ date: 1 }),
+      this.snapShotModel.aggregate([
+        {
+          $match: {
+            date: {
+              $gte: new Date(dateTimeRange.start),
+              $lte: new Date(dateTimeRange.end),
+            },
+          },
         },
-        date: {
-          $gte: new Date(dateTimeRange.start),
-          $lte: new Date(dateTimeRange.end),
+        {
+          $addFields: {
+            no_debated_proposals_count: {
+              $add: ['$community_proposals_count', '$core_proposals_count'],
+            },
+          },
         },
-      })
-      .sort({ date: 1 });
+        {
+          $project: {
+            date: 1,
+            no_debated_proposals_count: 1,
+          },
+        },
+        {
+          $sort: {
+            date: 1,
+          },
+        },
+      ]),
+    ]);
+
+    const googleGroupedByDate: Record<string, Array<StackedBarValue>> = {};
+    const snapShotGroupedByDate: Record<string, Array<StackedBarValue>> = {};
+
+    for (let index = 0; index < googleMetric.length; index++) {
+      const metricDate = googleMetric[index].date.toISOString();
+      const metricValue = googleMetric[index].metric_value;
+
+      googleGroupedByDate[metricDate] = [
+        {
+          name: 'Velocity_of_experiments',
+          value: metricValue as number,
+        },
+      ];
+    }
+    for (let index = 0; index < snapShotMetric.length; index++) {
+      const metricDate = snapShotMetric[index].date.toISOString();
+      const metricValue = snapShotMetric[index].no_debated_proposals_count;
+
+      snapShotGroupedByDate[metricDate] = [
+        {
+          name: 'No_debated_proposals_count',
+          value: metricValue,
+        },
+      ];
+    }
+    const mergedMetrics: Record<string, Array<StackedBarValue>> = mergeWith(
+      googleGroupedByDate,
+      snapShotGroupedByDate,
+      (objValue, srcValue) => {
+        return objValue.concat(srcValue);
+      },
+    );
+    const velocityOfExperimentsVNoDebatedProposalsValues: Array<StackedChartMetricValue> =
+      [];
+
+    for (const date in mergedMetrics) {
+      if (Object.prototype.hasOwnProperty.call(mergedMetrics, date)) {
+        velocityOfExperimentsVNoDebatedProposalsValues.push({
+          date: date,
+          values: mergedMetrics[date],
+        });
+      }
+    }
 
     return {
       metrics: {
         velocity_of_experiments_v_no_debated_proposals: {
-          values:
-            this.commonService.serializeToStackedChartMetricValues(
-              googleMetrics,
-            ),
+          values: velocityOfExperimentsVNoDebatedProposalsValues,
         },
       },
     };

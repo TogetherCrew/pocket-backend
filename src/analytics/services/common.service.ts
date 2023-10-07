@@ -118,31 +118,4 @@ export class CommonService {
 
     return barChartMetricsValues;
   }
-
-  serializeToStackedChartMetricValues<T>(input_list: Array<T>) {
-    const groupByDate: Record<string, Array<StackedBarValue>> = {};
-    const stackedChartMetricValues: Array<StackedChartMetricValue> = [];
-
-    for (let index = 0; index < input_list.length; index++) {
-      const metricDate = input_list[index]['date'].toISOString();
-      const metricName = input_list[index]['metric_name'];
-      const metricValue = input_list[index]['metric_value'];
-
-      if (metricDate in groupByDate) {
-        groupByDate[metricDate].push({ name: metricName, value: metricValue });
-      } else {
-        groupByDate[metricDate] = [{ name: metricName, value: metricValue }];
-      }
-    }
-    for (const date in groupByDate) {
-      if (Object.prototype.hasOwnProperty.call(groupByDate, date)) {
-        stackedChartMetricValues.push({
-          date: date,
-          values: groupByDate[date],
-        });
-      }
-    }
-
-    return stackedChartMetricValues;
-  }
 }

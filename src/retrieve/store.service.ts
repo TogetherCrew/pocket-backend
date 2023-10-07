@@ -122,7 +122,7 @@ export class StoreService {
 
       for (const metricName in output) {
         if (Object.prototype.hasOwnProperty.call(output, metricName)) {
-          const metricDate = moment(output[metricName].date).toISOString();
+          const metricDate = output[metricName].date;
           const metricValue = output[metricName].value;
 
           if (
