@@ -19,7 +19,7 @@ import {
   TransparencyMetricsResponse,
 } from '../types/community.type';
 import { SnapShot } from '@common/database/schemas/snap-shot.schema';
-import { mergeWith } from 'lodash';
+import { isArray, mergeWith } from 'lodash';
 
 @Injectable()
 export class CommunityService {
@@ -283,7 +283,10 @@ export class CommunityService {
       googleGroupedByDate,
       snapShotGroupedByDate,
       (objValue, srcValue) => {
-        return [...objValue, ...srcValue];
+        return [
+          ...(isArray(objValue) ? objValue : []),
+          ...(isArray(srcValue) ? srcValue : []),
+        ];
       },
     );
     const velocityOfExperimentsVNoDebatedProposalsValues: Array<StackedChartMetricValue> =
