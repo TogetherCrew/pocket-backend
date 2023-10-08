@@ -283,7 +283,7 @@ export class CommunityService {
       googleGroupedByDate,
       snapShotGroupedByDate,
       (objValue, srcValue) => {
-        return objValue.concat(srcValue);
+        return [...objValue, ...srcValue];
       },
     );
     const velocityOfExperimentsVNoDebatedProposalsValues: Array<StackedChartMetricValue> =
