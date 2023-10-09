@@ -80,7 +80,7 @@ export class CommunityService {
 
     return {
       value: currentCycleDeliveringImpactAvg,
-      previous: previousCycleDeliveringImpactAvg,
+      previous: previousCycleDeliveringImpactAvg || null,
       change: changeCycleDeliveringImpactAvg || 0,
     };
   }
@@ -124,10 +124,7 @@ export class CommunityService {
 
     return {
       metrics: {
-        ecosystem_projects_delivering_impact: {
-          value: ecosystemProjectsDeliveringImpact.value,
-          change: ecosystemProjectsDeliveringImpact.change,
-        },
+        ecosystem_projects_delivering_impact: ecosystemProjectsDeliveringImpact,
         pocket_network_DNA_NPS: {
           values: serializedNPSMetrics['pocket_network_DNA_NPS'] || [],
         },
