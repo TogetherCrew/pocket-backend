@@ -5,8 +5,6 @@ import {
   BarChartMetricValue,
   CycleRanges,
   DateTimeRange,
-  StackedBarValue,
-  StackedChartMetricValue,
 } from '../interfaces/common.interface';
 
 @Injectable()
