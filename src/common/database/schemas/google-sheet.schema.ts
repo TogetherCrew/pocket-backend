@@ -10,6 +10,7 @@ export type GoogleSheetMetricsName =
   | 'pocket_network_DNA_NPS'
   | 'v1_mainnet_launch_date'
   | 'voters_to_control_DAO_count'
+  | 'no_debated_proposals_count'
   | 'pokt_liquidity_amount'
   | 'twitter_followers_count'
   | 'community_NPS'
@@ -22,6 +23,7 @@ const GoogleSheetMetricsNameEnum: Array<GoogleSheetMetricsName> = [
   'projects_delivering_impact',
   'velocity_of_experiments',
   'pocket_network_DNA_NPS',
+  'no_debated_proposals_count',
   'v1_mainnet_launch_date',
   'voters_to_control_DAO_count',
   'pokt_liquidity_amount',
