@@ -6,13 +6,15 @@ import { AxiosResponse } from 'axios';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PoktScanRetriever } from '../pokt-scan.retriever';
 import {
+  PoktScanDAOTreasuryResponse,
+  PoktScanDAOTreasuryVariables,
   PoktScanOptions,
   PoktScanOutput,
   PoktScanRecord,
-  PoktScanResponse,
-  PoktScanVariables,
+  PoktScanStackedNodesResponse,
+  PoktScanSupplyResponse,
+  PoktScanSupplyVariables,
 } from '../../interfaces/pokt-scan.interface';
-import lodash from 'lodash';
 
 jest.mock('@common/winston/winston.provider');
 
@@ -42,9 +44,9 @@ describe('PoktScan Retriever', () => {
 
   describe('When request method called', () => {
     let query: string;
-    let variables: PoktScanVariables;
-    let returnValue: PoktScanResponse;
-    let axiosResponse: AxiosResponse<PoktScanResponse>;
+    let variables: Record<string, any>;
+    let returnValue: PoktScanSupplyResponse;
+    let axiosResponse: AxiosResponse<PoktScanSupplyResponse>;
 
     beforeEach(async () => {
       query = 'query { test { test } }';
@@ -63,14 +65,8 @@ describe('PoktScan Retriever', () => {
       axiosResponse = {
         data: {
           data: {
-            incomes: {
-              records: [],
-            },
-            expenses: {
-              records: [],
-            },
             circulating_supply: {
-              records: [],
+              points: [],
             },
             supply: {
               token_burn: {
@@ -139,39 +135,73 @@ describe('PoktScan Retriever', () => {
     });
   });
 
-  describe('When getGQLQuery method called', () => {
+  describe('When getDAOTreasuryGQLQuery method called', () => {
     let returnValue: string;
 
     beforeAll(() => {
-      returnValue = retriever['getGQLQuery']();
+      returnValue = retriever['getDAOTreasuryGQLQuery']();
     });
 
     test('Should be defined', () => {
-      expect(retriever['getGQLQuery']).toBeDefined();
+      expect(retriever['getDAOTreasuryGQLQuery']).toBeDefined();
     });
 
     test('Should return pokt-scan graphQL query', () => {
       expect(returnValue).toBe(`
-    query poktscan(
+    query daoTreasury($pagination: ListInput) {
+      DAO_total_balance: ListPoktAccount(pagination: $pagination) {
+        items {
+          amount
+        }
+      }
+    }`);
+    });
+  });
+
+  describe('When getStackedNodesGQLQuery method called', () => {
+    let returnValue: string;
+
+    beforeAll(() => {
+      returnValue = retriever['getStackedNodesGQLQuery']();
+    });
+
+    test('Should be defined', () => {
+      expect(retriever['getStackedNodesGQLQuery']).toBeDefined();
+    });
+
+    test('Should return pokt-scan graphQL query', () => {
+      expect(returnValue).toBe(`
+    query {
+      stackedNodes: GetStakedNodesAndAppsByChain(input: {}) {
+        chains: staked_by_chains {
+          nodes_count: nodes    
+        }
+      }
+    }`);
+    });
+  });
+
+  describe('When getSupplyGQLQuery method called', () => {
+    let returnValue: string;
+
+    beforeAll(() => {
+      returnValue = retriever['getSupplyGQLQuery']();
+    });
+
+    test('Should be defined', () => {
+      expect(retriever['getSupplyGQLQuery']).toBeDefined();
+    });
+
+    test('Should return pokt-scan graphQL query', () => {
+      expect(returnValue).toBe(`
+    query(
       $listSummaryInput: SummaryWithBlockInput!
       $supplyInput: GetSupplySummaryFromStartDateInput!
     ) {
-      incomes: ListSummaryBetweenDates(input: $listSummaryInput) {
-        points {
-          point
-          amount: total_dao_rewards
-        }
-      }
       circulating_supply: ListSummaryBetweenDates(input: $listSummaryInput) {
         points {
           point
           amount: m0
-        }
-      }
-      expenses: ListDaoExpensesBetweenDates(input: $listSummaryInput) {
-        points {
-          point
-          amount
         }
       }
       supply: GetSupplySummaryFromStartToCurrentDate(input: $supplyInput) {
@@ -189,16 +219,14 @@ describe('PoktScan Retriever', () => {
   describe('When reduceRecords method called', () => {
     let returnValue: number;
     let records: Array<PoktScanRecord>;
-    let reduceReturnValue: number;
+    let expectedReturnValue: number;
 
     beforeEach(() => {
       records = [
         { amount: 1.2, point: '' },
         { amount: 1.3, point: '' },
       ];
-      reduceReturnValue = 2.5;
-
-      jest.spyOn(lodash, 'reduce').mockReturnValueOnce(reduceReturnValue);
+      expectedReturnValue = 2.5;
 
       returnValue = retriever['reduceRecords'](records);
     });
@@ -207,27 +235,73 @@ describe('PoktScan Retriever', () => {
       expect(retriever['reduceRecords']).toBeDefined();
     });
 
-    test('Should call reduce method from lodash', () => {
-      expect(lodash.reduce).toBeCalledWith(records, expect.any(Function), 0);
+    test("Should return sum of records' amount", () => {
+      expect(returnValue).toBe(expectedReturnValue);
+    });
+  });
+
+  describe('When calculateValidatorsCountToControlProtocol method called', () => {
+    let returnValue: number;
+    let chains: Array<{ nodes_count: number }>;
+
+    test('Should be defined', () => {
+      expect(
+        retriever['calculateValidatorsCountToControlProtocol'],
+      ).toBeDefined();
     });
 
-    test("Should return sum of records' amount", () => {
-      expect(returnValue).toBe(reduceReturnValue);
+    describe('If node count is gte 1000', () => {
+      beforeAll(() => {
+        chains = [{ nodes_count: 1000 }, { nodes_count: 2 }];
+
+        returnValue =
+          retriever['calculateValidatorsCountToControlProtocol'](chains);
+      });
+
+      test('Should return 660', () => {
+        expect(returnValue).toBe(660);
+      });
+    });
+
+    describe('If node count is lt 1000', () => {
+      beforeAll(() => {
+        chains = [{ nodes_count: 1 }, { nodes_count: 2 }];
+
+        returnValue =
+          retriever['calculateValidatorsCountToControlProtocol'](chains);
+      });
+
+      test('Should return calculated value', () => {
+        expect(returnValue).toBe(Math.ceil((1 + 2) * 0.66));
+      });
+    });
+  });
+
+  describe('When serializeFloatValue method called', () => {
+    let amount: number;
+    let returnValue: number;
+
+    beforeAll(() => {
+      amount = 1200;
+
+      returnValue = retriever['serializeFloatValue'](amount);
+    });
+
+    test('Should be defined', () => {
+      expect(retriever['serializeFloatValue']).toBeDefined();
+    });
+
+    test('Should return calculated value', () => {
+      expect(returnValue).toBe(amount / 1000000);
     });
   });
 
   describe('When serializeResponse method called', () => {
     let returnValue: PoktScanOutput;
-    const response: PoktScanResponse = {
+    const supplyResponse: PoktScanSupplyResponse = {
       data: {
-        incomes: {
-          records: [{ point: '', amount: 1.0 }],
-        },
-        expenses: {
-          records: [{ point: '', amount: 2.0 }],
-        },
         circulating_supply: {
-          records: [{ point: '', amount: 3.0 }],
+          points: [{ point: '', amount: 3.0 }],
         },
         supply: {
           token_burn: {
@@ -240,12 +314,31 @@ describe('PoktScan Retriever', () => {
       },
     };
 
-    beforeEach(() => {
-      jest.spyOn(retriever as any, 'reduceRecords').mockReturnValueOnce(3.0);
-      jest.spyOn(retriever as any, 'reduceRecords').mockReturnValueOnce(1.0);
-      jest.spyOn(retriever as any, 'reduceRecords').mockReturnValueOnce(2.0);
+    const daoResponse: PoktScanDAOTreasuryResponse = {
+      data: {
+        DAO_total_balance: {
+          items: [{ amount: 1.0 }],
+        },
+      },
+    };
 
-      returnValue = retriever['serializeResponse'](response);
+    const nodesResponse: PoktScanStackedNodesResponse = {
+      data: {
+        stackedNodes: {
+          chains: [{ nodes_count: 100 }],
+        },
+      },
+    };
+
+    beforeEach(() => {
+      jest.spyOn(retriever as any, 'reduceRecords').mockReturnValueOnce(1.0);
+      jest.spyOn(retriever as any, 'reduceRecords').mockReturnValueOnce(3.0);
+
+      returnValue = retriever['serializeResponse'](
+        daoResponse,
+        supplyResponse,
+        nodesResponse,
+      );
     });
 
     test('Should be defined', () => {
@@ -254,9 +347,8 @@ describe('PoktScan Retriever', () => {
 
     test.each`
       property                | source
-      ${'circulating_supply'} | ${response.data.circulating_supply.records}
-      ${'income'}             | ${response.data.incomes.records}
-      ${'expense'}            | ${response.data.expenses.records}
+      ${'dao_treasury'}       | ${daoResponse.data.DAO_total_balance.items}
+      ${'circulating_supply'} | ${supplyResponse.data.circulating_supply.points}
     `(
       'Should call reduceRecords method from retriever for $property',
       ({ source }) => {
@@ -266,17 +358,55 @@ describe('PoktScan Retriever', () => {
 
     test('Should return serialized output', () => {
       expect(returnValue).toEqual({
-        token_burn: response.data.supply.token_burn.amount,
-        token_issuance: response.data.supply.token_issuance.amount,
-        circulating_supply: 3.0,
-        income: 1.0,
-        expense: 2.0,
+        token_burn: 0,
+        token_issuance: 0,
+        circulating_supply: 3 / 1000000,
+        DAO_total_balance: 1 / 1000000,
+        validators_to_control_protocol_count: 66,
       });
     });
   });
 
-  describe('When serializeOptions method called', () => {
-    let returnValue: PoktScanVariables;
+  describe('When serializeDAOTreasuryVariables method called', () => {
+    let returnValue: PoktScanDAOTreasuryVariables;
+    let options: PoktScanOptions;
+    let pagination;
+
+    beforeAll(() => {
+      pagination = {
+        filter: {
+          operator: 'AND',
+          properties: [],
+        },
+        limit: 0,
+      };
+
+      options = {
+        start_date: '',
+        end_date: '',
+        unit_time: 'block',
+        date_format: '',
+        interval: 1,
+        exclusive_date: false,
+        pagination: pagination,
+      };
+
+      returnValue = retriever['serializeDAOTreasuryVariables'](options);
+    });
+
+    test('Should be defined', () => {
+      expect(retriever['serializeDAOTreasuryVariables']).toBeDefined();
+    });
+
+    test('Should return serialized variables', () => {
+      expect(returnValue).toEqual({
+        pagination: pagination,
+      });
+    });
+  });
+
+  describe('When serializeSupplyVariables method called', () => {
+    let returnValue: PoktScanSupplyVariables;
     let options: PoktScanOptions;
 
     beforeAll(() => {
@@ -284,27 +414,182 @@ describe('PoktScan Retriever', () => {
         start_date: '',
         end_date: '',
         unit_time: 'block',
+        date_format: '',
         interval: 1,
         exclusive_date: false,
+        pagination: {
+          filter: {
+            operator: 'AND',
+            properties: [],
+          },
+          limit: 0,
+        },
       };
 
-      returnValue = retriever['serializeOptions'](options);
+      returnValue = retriever['serializeSupplyVariables'](options);
     });
 
     test('Should be defined', () => {
-      expect(retriever['serializeOptions']).toBeDefined();
+      expect(retriever['serializeSupplyVariables']).toBeDefined();
     });
 
     test('Should return serialized variables', () => {
       expect(returnValue).toEqual({
         supplyInput: {
           start_date: options.start_date,
+          date_format: '',
         },
         listSummaryInput: {
           start_date: options.start_date,
           end_date: options.end_date,
           unit_time: options.unit_time,
           interval: options.interval,
+          date_format: '',
+        },
+      });
+    });
+  });
+
+  describe('When getDAOTreasuryProps method called', () => {
+    let variables: PoktScanDAOTreasuryVariables;
+    let returnValue: PoktScanDAOTreasuryResponse;
+
+    beforeEach(async () => {
+      variables = {
+        pagination: {
+          filter: {
+            operator: 'AND',
+            properties: [],
+          },
+          limit: 0,
+        },
+      };
+      returnValue = {
+        data: {
+          DAO_total_balance: {
+            items: [{ amount: 0 }],
+          },
+        },
+      };
+
+      jest
+        .spyOn(retriever as any, 'getDAOTreasuryGQLQuery')
+        .mockReturnValueOnce('');
+      jest.spyOn(retriever as any, 'request').mockReturnValueOnce(returnValue);
+
+      returnValue = await retriever['getDAOTreasuryProps'](variables);
+    });
+
+    test('Should be called getDAOTreasuryGQLQuery method', () => {
+      expect(retriever['getDAOTreasuryGQLQuery']).toBeCalledWith();
+    });
+
+    test('Should be called request method', () => {
+      expect(retriever['request']).toBeCalledWith('', variables);
+    });
+
+    test('Should return response', () => {
+      expect(returnValue).toEqual({
+        data: {
+          DAO_total_balance: {
+            items: [{ amount: 0 }],
+          },
+        },
+      });
+    });
+  });
+
+  describe('When getSupplyProps method called', () => {
+    let variables: PoktScanSupplyVariables;
+    let returnValue: PoktScanSupplyResponse;
+
+    beforeEach(async () => {
+      variables = {
+        listSummaryInput: {
+          start_date: '',
+          end_date: '',
+          date_format: '',
+        },
+        supplyInput: {
+          start_date: '',
+          date_format: '',
+        },
+      };
+      returnValue = {
+        data: {
+          circulating_supply: {
+            points: [{ amount: 0, point: '' }],
+          },
+          supply: {
+            token_burn: { amount: 0 },
+            token_issuance: { amount: 0 },
+          },
+        },
+      };
+
+      jest.spyOn(retriever as any, 'getSupplyGQLQuery').mockReturnValueOnce('');
+      jest.spyOn(retriever as any, 'request').mockReturnValueOnce(returnValue);
+
+      returnValue = await retriever['getSupplyProps'](variables);
+    });
+
+    test('Should be called getSupplyGQLQuery method', () => {
+      expect(retriever['getSupplyGQLQuery']).toBeCalledWith();
+    });
+
+    test('Should be called request method', () => {
+      expect(retriever['request']).toBeCalledWith('', variables);
+    });
+
+    test('Should return response', () => {
+      expect(returnValue).toEqual({
+        data: {
+          circulating_supply: {
+            points: [{ amount: 0, point: '' }],
+          },
+          supply: {
+            token_burn: { amount: 0 },
+            token_issuance: { amount: 0 },
+          },
+        },
+      });
+    });
+  });
+
+  describe('When getStackedNodesProps method called', () => {
+    let returnValue: PoktScanStackedNodesResponse;
+
+    beforeEach(async () => {
+      returnValue = {
+        data: {
+          stackedNodes: {
+            chains: [{ nodes_count: 0 }],
+          },
+        },
+      };
+
+      jest
+        .spyOn(retriever as any, 'getStackedNodesGQLQuery')
+        .mockReturnValueOnce('');
+      jest.spyOn(retriever as any, 'request').mockReturnValueOnce(returnValue);
+
+      returnValue = await retriever['getStackedNodesProps']();
+    });
+
+    test('Should be called getStackedNodesGQLQuery method', () => {
+      expect(retriever['getStackedNodesGQLQuery']).toBeCalledWith();
+    });
+
+    test('Should be called request method', () => {
+      expect(retriever['request']).toBeCalledWith('');
+    });
+
+    test('Should return response', () => {
+      expect(returnValue).toEqual({
+        data: {
+          stackedNodes: {
+            chains: [{ nodes_count: 0 }],
+          },
         },
       });
     });
@@ -312,67 +597,51 @@ describe('PoktScan Retriever', () => {
 
   describe('When retrieve method called', () => {
     let returnValue: PoktScanOutput;
-    let options: PoktScanOptions;
-    let query: string;
-    let variables: PoktScanVariables;
-    let response: PoktScanResponse;
+    const options: PoktScanOptions = {
+      start_date: '',
+      end_date: '',
+      unit_time: 'block',
+      interval: 1,
+      exclusive_date: false,
+      date_format: '',
+      pagination: {
+        filter: {
+          operator: 'AND',
+          properties: [],
+        },
+        limit: 0,
+      },
+    };
+    let DAOTreasuryVariables: PoktScanDAOTreasuryVariables;
+    let supplyVariables: PoktScanSupplyVariables;
     let serializedOutput: PoktScanOutput;
+    let promiseOutput: Array<string>;
 
     beforeEach(async () => {
-      options = {
-        start_date: '',
-        end_date: '',
-        unit_time: 'block',
-        interval: 1,
-        exclusive_date: false,
-      };
-      query = 'test';
-      variables = {
-        listSummaryInput: {
-          start_date: '',
-          end_date: '',
-          unit_time: 'block',
-          interval: 0,
-          exclusive_date: false,
-        },
-        supplyInput: {
-          start_date: '',
-        },
-      };
-      response = {
-        data: {
-          incomes: {
-            records: [],
-          },
-          expenses: {
-            records: [],
-          },
-          circulating_supply: {
-            records: [],
-          },
-          supply: {
-            token_burn: {
-              amount: 0,
-            },
-            token_issuance: {
-              amount: 0,
-            },
-          },
-        },
-      };
+      promiseOutput = [];
       serializedOutput = {
-        token_burn: response.data.supply.token_burn.amount,
-        token_issuance: response.data.supply.token_issuance.amount,
-        circulating_supply: 3.0,
-        income: 1.0,
-        expense: 2.0,
+        circulating_supply: 0,
+        DAO_total_balance: 0,
+        token_burn: 0,
+        token_issuance: 0,
+        validators_to_control_protocol_count: 0,
       };
 
-      jest.spyOn(retriever as any, 'getGQLQuery').mockReturnValueOnce(query);
       jest
-        .spyOn(retriever as any, 'serializeOptions')
-        .mockReturnValueOnce(variables);
-      jest.spyOn(retriever as any, 'request').mockReturnValueOnce(response);
+        .spyOn(retriever as any, 'serializeDAOTreasuryVariables')
+        .mockReturnValueOnce(DAOTreasuryVariables);
+      jest
+        .spyOn(retriever as any, 'serializeSupplyVariables')
+        .mockReturnValueOnce(supplyVariables);
+      jest
+        .spyOn(retriever as any, 'getDAOTreasuryProps')
+        .mockReturnValueOnce('');
+      jest.spyOn(retriever as any, 'getSupplyProps').mockReturnValueOnce('');
+      jest
+        .spyOn(retriever as any, 'getStackedNodesProps')
+        .mockReturnValueOnce('');
+
+      jest.spyOn(Promise, 'all').mockResolvedValueOnce(promiseOutput);
       jest
         .spyOn(retriever as any, 'serializeResponse')
         .mockReturnValueOnce(serializedOutput);
@@ -384,20 +653,25 @@ describe('PoktScan Retriever', () => {
       expect(retriever['retrieve']).toBeDefined();
     });
 
-    test('Should call getGQLQuery from retriever', () => {
-      expect(retriever['getGQLQuery']).toBeCalledWith();
+    test.each`
+      fn                                 | input
+      ${'serializeDAOTreasuryVariables'} | ${options}
+      ${'serializeSupplyVariables'}      | ${options}
+    `('Should be called $fn method', ({ fn, input }) => {
+      expect(retriever[fn]).toBeCalledWith(input);
     });
 
-    test('Should call serializeOptions from retriever', () => {
-      expect(retriever['serializeOptions']).toBeCalledWith(options);
-    });
-
-    test('Should call request from retriever', () => {
-      expect(retriever['request']).toBeCalledWith(query, variables);
-    });
-
-    test('Should call serializeResponse from retriever', () => {
-      expect(retriever['serializeResponse']).toBeCalledWith(response);
+    test.each`
+      fn                        | input
+      ${'getDAOTreasuryProps'}  | ${DAOTreasuryVariables}
+      ${'getSupplyProps'}       | ${supplyVariables}
+      ${'getStackedNodesProps'} | ${undefined}
+    `('Should be called $fn method', ({ fn, input }) => {
+      if (input !== undefined) {
+        expect(retriever[fn]).toBeCalledWith(input);
+      } else {
+        expect(retriever[fn]).toBeCalled();
+      }
     });
 
     test('Should return pokt-scan output', () => {

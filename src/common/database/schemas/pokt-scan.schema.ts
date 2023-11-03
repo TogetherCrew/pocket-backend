@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({
-  _id: false,
   versionKey: false,
   timestamps: false,
   collection: PoktScan.name,
@@ -11,10 +10,7 @@ export class PoktScan {
   date: Date;
 
   @Prop()
-  income: number;
-
-  @Prop()
-  expense: number;
+  DAO_total_balance: number;
 
   @Prop()
   token_burn: number;
@@ -24,6 +20,9 @@ export class PoktScan {
 
   @Prop()
   circulating_supply: number;
+
+  @Prop()
+  validators_to_control_protocol_count: number;
 }
 
 export const PoktScanSchema = SchemaFactory.createForClass(PoktScan);

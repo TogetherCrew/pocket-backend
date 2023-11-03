@@ -1,6 +1,7 @@
 interface SummaryWithBlockInput {
   start_date: string;
   end_date: string;
+  date_format: string;
   unit_time?: 'block' | 'hour' | 'day' | 'week' | 'month' | 'year';
   interval?: number;
   exclusive_date?: boolean;
@@ -8,6 +9,30 @@ interface SummaryWithBlockInput {
 
 interface GetSupplySummaryFromStartDateInput {
   start_date: string;
+  date_format: string;
+}
+
+interface PaginationInput {
+  filter: {
+    operator: 'AND' | 'OR';
+    properties: Array<{
+      operator:
+        | 'EQ'
+        | 'NE'
+        | 'GT'
+        | 'GTE'
+        | 'LT'
+        | 'LTE'
+        | 'REGEX'
+        | 'IN'
+        | 'TEXT'
+        | 'EXISTS';
+      property: string;
+      type: 'STRING' | 'INT' | 'FLOAT' | 'BOOLEAN' | 'DATE' | 'NULL';
+      value: string;
+    }>;
+  };
+  limit: number;
 }
 
 export interface PoktScanRecord {
@@ -15,16 +40,17 @@ export interface PoktScanRecord {
   amount: number;
 }
 
-export interface PoktScanResponse {
+export interface PoktScanDAOTreasuryResponse {
   data: {
-    incomes: {
-      records: Array<PoktScanRecord>;
+    DAO_total_balance: {
+      items: Array<Omit<PoktScanRecord, 'point'>>;
     };
-    expenses: {
-      records: Array<PoktScanRecord>;
-    };
+  };
+}
+export interface PoktScanSupplyResponse {
+  data: {
     circulating_supply: {
-      records: Array<PoktScanRecord>;
+      points: Array<PoktScanRecord>;
     };
     supply: {
       token_burn: {
@@ -36,18 +62,33 @@ export interface PoktScanResponse {
     };
   };
 }
+export interface PoktScanStackedNodesResponse {
+  data: {
+    stackedNodes: {
+      chains: Array<{
+        nodes_count: number;
+      }>;
+    };
+  };
+}
 export interface PoktScanOutput {
-  income: number;
-  expense: number;
+  DAO_total_balance: number;
   token_burn: number;
   token_issuance: number;
   circulating_supply: number;
+  validators_to_control_protocol_count: number;
 }
-export interface PoktScanVariables {
+export interface PoktScanDAOTreasuryVariables {
+  pagination: PaginationInput;
+}
+
+export interface PoktScanSupplyVariables {
   listSummaryInput: SummaryWithBlockInput;
   supplyInput: GetSupplySummaryFromStartDateInput;
 }
 
 export interface PoktScanOptions
   extends SummaryWithBlockInput,
-    GetSupplySummaryFromStartDateInput {}
+    GetSupplySummaryFromStartDateInput {
+  pagination: PaginationInput;
+}

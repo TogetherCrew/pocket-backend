@@ -1,18 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { BaseRetriever } from '../interfaces/common.interface';
 import {
+  PoktScanDAOTreasuryResponse,
+  PoktScanDAOTreasuryVariables,
   PoktScanOptions,
   PoktScanOutput,
   PoktScanRecord,
-  PoktScanResponse,
-  PoktScanVariables,
+  PoktScanStackedNodesResponse,
+  PoktScanSupplyResponse,
+  PoktScanSupplyVariables,
 } from '../interfaces/pokt-scan.interface';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { WinstonProvider } from '@common/winston/winston.provider';
 import { reduce } from 'lodash';
-
 @Injectable()
 export class PoktScanRetriever
   implements BaseRetriever<PoktScanOptions, PoktScanOutput>
@@ -23,9 +25,9 @@ export class PoktScanRetriever
     private readonly logger: WinstonProvider,
   ) {}
 
-  private async request(query: string, variables: PoktScanVariables) {
+  private async request<T>(query: string, variables?: Record<string, any>) {
     const response = await firstValueFrom(
-      this.axios.post<PoktScanResponse>(
+      this.axios.post<T>(
         this.config.get<string>('POKT_SCAN_API_BASE_URL'),
         {
           query,
@@ -53,28 +55,27 @@ export class PoktScanRetriever
     return response.data;
   }
 
-  private getGQLQuery(): string {
+  private getDAOTreasuryGQLQuery(): string {
     return `
-    query poktscan(
+    query daoTreasury($pagination: ListInput) {
+      DAO_total_balance: ListPoktAccount(pagination: $pagination) {
+        items {
+          amount
+        }
+      }
+    }`;
+  }
+
+  private getSupplyGQLQuery(): string {
+    return `
+    query(
       $listSummaryInput: SummaryWithBlockInput!
       $supplyInput: GetSupplySummaryFromStartDateInput!
     ) {
-      incomes: ListSummaryBetweenDates(input: $listSummaryInput) {
-        points {
-          point
-          amount: total_dao_rewards
-        }
-      }
       circulating_supply: ListSummaryBetweenDates(input: $listSummaryInput) {
         points {
           point
           amount: m0
-        }
-      }
-      expenses: ListDaoExpensesBetweenDates(input: $listSummaryInput) {
-        points {
-          point
-          amount
         }
       }
       supply: GetSupplySummaryFromStartToCurrentDate(input: $supplyInput) {
@@ -88,36 +89,112 @@ export class PoktScanRetriever
     }`;
   }
 
-  private reduceRecords(records: Array<PoktScanRecord>): number {
-    return reduce(
-      records,
+  private getStackedNodesGQLQuery(): string {
+    return `
+    query {
+      stackedNodes: GetStakedNodesAndAppsByChain(input: {}) {
+        chains: staked_by_chains {
+          nodes_count: nodes    
+        }
+      }
+    }`;
+  }
+
+  private reduceRecords(records: Array<Partial<PoktScanRecord>>): number {
+    let finalValue = 0;
+
+    for (let index = 0; index < records.length; index++) {
+      finalValue += records[index].amount;
+    }
+
+    return finalValue;
+  }
+
+  private async getDAOTreasuryProps(variables: PoktScanDAOTreasuryVariables) {
+    const query = this.getDAOTreasuryGQLQuery();
+
+    return this.request<PoktScanDAOTreasuryResponse>(query, variables);
+  }
+
+  private async getSupplyProps(variables: PoktScanSupplyVariables) {
+    const query = this.getSupplyGQLQuery();
+
+    return this.request<PoktScanSupplyResponse>(query, variables);
+  }
+
+  private async getStackedNodesProps() {
+    const query = this.getStackedNodesGQLQuery();
+
+    return this.request<PoktScanStackedNodesResponse>(query);
+  }
+
+  private calculateValidatorsCountToControlProtocol(
+    chains: Array<{ nodes_count: number }>,
+  ): number {
+    const nodes_count = reduce(
+      chains,
       (previous, current) => {
-        return previous + current.amount;
+        return previous + current.nodes_count;
       },
       0,
     );
+
+    if (nodes_count >= 1000) {
+      return 660;
+    } else {
+      return Math.ceil(nodes_count * 0.66);
+    }
   }
 
-  private serializeResponse(response: PoktScanResponse): PoktScanOutput {
+  private serializeFloatValue(amount: number): number {
+    return amount / 1000000;
+  }
+
+  private serializeResponse(
+    DAO_treasury_response: PoktScanDAOTreasuryResponse,
+    supply_response: PoktScanSupplyResponse,
+    stacked_nodes_response: PoktScanStackedNodesResponse,
+  ): PoktScanOutput {
     return {
-      token_burn: response.data.supply.token_burn.amount,
-      token_issuance: response.data.supply.token_issuance.amount,
-      circulating_supply: this.reduceRecords(
-        response.data.circulating_supply.records,
+      DAO_total_balance: this.serializeFloatValue(
+        this.reduceRecords(DAO_treasury_response.data.DAO_total_balance.items),
       ),
-      income: this.reduceRecords(response.data.incomes.records),
-      expense: this.reduceRecords(response.data.expenses.records),
+      token_burn: this.serializeFloatValue(
+        supply_response.data.supply.token_burn.amount,
+      ),
+      token_issuance: this.serializeFloatValue(
+        supply_response.data.supply.token_issuance.amount,
+      ),
+      circulating_supply: this.serializeFloatValue(
+        this.reduceRecords(supply_response.data.circulating_supply.points),
+      ),
+      validators_to_control_protocol_count:
+        this.calculateValidatorsCountToControlProtocol(
+          stacked_nodes_response.data.stackedNodes.chains,
+        ),
     };
   }
 
-  private serializeOptions(options: PoktScanOptions): PoktScanVariables {
+  private serializeDAOTreasuryVariables(
+    options: PoktScanOptions,
+  ): PoktScanDAOTreasuryVariables {
+    return {
+      pagination: options.pagination,
+    };
+  }
+
+  private serializeSupplyVariables(
+    options: PoktScanOptions,
+  ): PoktScanSupplyVariables {
     return {
       supplyInput: {
         start_date: options.start_date,
+        date_format: options.date_format,
       },
       listSummaryInput: {
         start_date: options.start_date,
         end_date: options.end_date,
+        date_format: options.date_format,
         ...(options.interval && { interval: options.interval }),
         ...(options.unit_time && { unit_time: options.unit_time }),
         ...(options.exclusive_date && {
@@ -128,11 +205,20 @@ export class PoktScanRetriever
   }
 
   async retrieve(options: PoktScanOptions): Promise<PoktScanOutput> {
-    const query = this.getGQLQuery();
-    const variables = this.serializeOptions(options);
+    const DAOTreasuryVariables = this.serializeDAOTreasuryVariables(options);
+    const supplyVariables = this.serializeSupplyVariables(options);
 
-    const response = await this.request(query, variables);
+    const [DAOTreasuryResponse, supplyResponse, stackedNodesResponse] =
+      await Promise.all([
+        this.getDAOTreasuryProps(DAOTreasuryVariables),
+        this.getSupplyProps(supplyVariables),
+        this.getStackedNodesProps(),
+      ]);
 
-    return this.serializeResponse(response);
+    return this.serializeResponse(
+      DAOTreasuryResponse,
+      supplyResponse,
+      stackedNodesResponse,
+    );
   }
 }

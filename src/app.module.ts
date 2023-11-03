@@ -15,6 +15,8 @@ import { DatabaseModule } from '@common/database/database.module';
     ConfigModule.forRoot({ isGlobal: true }),
     WinstonModule.forRootAsync({
       useFactory: (config: ConfigService) => {
+        const grafanaServiceName = config.get<string>('GRAFANA_SERVICE_NAME');
+
         return {
           level: config.get<string>('DEBUG_MODE') === 'true' ? 'debug' : 'info',
           format: format.combine(
@@ -27,6 +29,13 @@ import { DatabaseModule } from '@common/database/database.module';
               ? [
                   new LokiTransport({
                     host: config.get<string>('GRAFANA_LOKI_HOST'),
+                    format: format.json(),
+                    labels: {
+                      'service-name':
+                        grafanaServiceName?.length > 0
+                          ? grafanaServiceName
+                          : 'pocket-backend',
+                    },
                   }),
                   winstonConsoleTransport,
                 ]

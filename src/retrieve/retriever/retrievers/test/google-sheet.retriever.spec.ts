@@ -247,18 +247,39 @@ describe('GoogleSheet Retriever', () => {
     let returnValue: Array<any>;
     let sheet_values: any[][];
 
-    beforeAll(() => {
-      sheet_values = [[], []];
-
-      returnValue = retriever['latestRow'](sheet_values);
-    });
-
     test('Should be defined', () => {
       expect(retriever['latestRow']).toBeDefined();
     });
 
-    test('Should return latest row', () => {
-      expect(returnValue).toEqual(sheet_values[sheet_values.length - 1]);
+    describe('If latest row index was gte than 1', () => {
+      beforeAll(() => {
+        sheet_values = [
+          ['date', 'value'],
+          ['2023-10-01', '23'],
+        ];
+
+        jest
+          .spyOn(lodash, 'map')
+          .mockReturnValueOnce(['2023-10-01', 23] as any);
+
+        returnValue = retriever['latestRow'](sheet_values);
+      });
+
+      test('Should return latest row', () => {
+        expect(returnValue).toEqual(['2023-10-01', 23]);
+      });
+    });
+
+    describe('If latest row index was lt than 1', () => {
+      beforeAll(() => {
+        sheet_values = [['date', 'value']];
+
+        returnValue = retriever['latestRow'](sheet_values);
+      });
+
+      test('Should return empty array', () => {
+        expect(returnValue).toEqual([]);
+      });
     });
   });
 
@@ -277,7 +298,6 @@ describe('GoogleSheet Retriever', () => {
         projects_gave_update_count: undefined,
         projects_delivering_impact: undefined,
         velocity_of_experiments: undefined,
-        no_debated_proposals_count: undefined,
         pocket_network_DNA_NPS: undefined,
         v1_mainnet_launch_date: undefined,
         voters_to_control_DAO_count: undefined,
@@ -317,7 +337,6 @@ describe('GoogleSheet Retriever', () => {
       projects_gave_update_count: undefined,
       projects_delivering_impact: undefined,
       velocity_of_experiments: undefined,
-      no_debated_proposals_count: undefined,
       pocket_network_DNA_NPS: undefined,
       v1_mainnet_launch_date: undefined,
       voters_to_control_DAO_count: undefined,

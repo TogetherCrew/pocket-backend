@@ -8,7 +8,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import moment from 'moment';
 import { Model } from 'mongoose';
 import { AggregationService } from './aggregation.service';
-import { RetrieveService } from './retrieve.service';
 import { CoinGeckoOutput } from './retriever/interfaces/coin-gecko.interface';
 import { GoogleSheetOutput } from './retriever/interfaces/google-sheet.interface';
 import { PoktScanOutput } from './retriever/interfaces/pokt-scan.interface';
@@ -50,12 +49,12 @@ export class StoreService {
             date,
             pokt_price: output.pokt_price,
           })}`,
-          RetrieveService.name,
+          StoreService.name,
         );
       } else {
         this.logger.debug(
           `exists values for date(${date}) in CoinGecko collection`,
-          RetrieveService.name,
+          StoreService.name,
         );
       }
     }
@@ -78,12 +77,12 @@ export class StoreService {
             date,
             ...output,
           })}`,
-          RetrieveService.name,
+          StoreService.name,
         );
       } else {
         this.logger.debug(
           `exists values for date(${date}) in SnapShot collection`,
-          RetrieveService.name,
+          StoreService.name,
         );
       }
     }
@@ -106,12 +105,12 @@ export class StoreService {
             date,
             ...output,
           })}`,
-          RetrieveService.name,
+          StoreService.name,
         );
       } else {
         this.logger.debug(
           `exists values for date(${date}) in PoktScan collection`,
-          RetrieveService.name,
+          StoreService.name,
         );
       }
     }
@@ -123,7 +122,7 @@ export class StoreService {
 
       for (const metricName in output) {
         if (Object.prototype.hasOwnProperty.call(output, metricName)) {
-          const metricDate = moment(output[metricName].date).toISOString();
+          const metricDate = output[metricName].date;
           const metricValue = output[metricName].value;
 
           if (
@@ -141,7 +140,7 @@ export class StoreService {
           } else {
             this.logger.debug(
               `exists values for date(${metricDate}) and metric(${metricName}) in GoogleSheet collection`,
-              RetrieveService.name,
+              StoreService.name,
             );
           }
         }
@@ -154,7 +153,7 @@ export class StoreService {
           `new values inserted in GoogleSheet collection ${JSON.stringify(
             newMetricsValue,
           )}`,
-          RetrieveService.name,
+          StoreService.name,
         );
       }
     }
@@ -174,7 +173,7 @@ export class StoreService {
           metricValue !== undefined &&
           !(await this.compoundMetricsModel.findOne({
             date,
-            metricName,
+            metric_name: metricName,
           }))
         ) {
           newMetricsValue.push({
@@ -185,7 +184,7 @@ export class StoreService {
         } else {
           this.logger.debug(
             `exists values for date(${date}) and metric(${metricName}) in CompoundMetrics collection`,
-            RetrieveService.name,
+            StoreService.name,
           );
         }
       }

@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose from 'mongoose';
 
 export type GoogleSheetMetricsName =
   | 'projects_working_in_open_count'
@@ -6,10 +7,10 @@ export type GoogleSheetMetricsName =
   | 'projects_gave_update_count'
   | 'projects_delivering_impact'
   | 'velocity_of_experiments'
-  | 'no_debated_proposals_count'
   | 'pocket_network_DNA_NPS'
   | 'v1_mainnet_launch_date'
   | 'voters_to_control_DAO_count'
+  | 'no_debated_proposals_count'
   | 'pokt_liquidity_amount'
   | 'twitter_followers_count'
   | 'community_NPS'
@@ -21,8 +22,8 @@ const GoogleSheetMetricsNameEnum: Array<GoogleSheetMetricsName> = [
   'projects_gave_update_count',
   'projects_delivering_impact',
   'velocity_of_experiments',
-  'no_debated_proposals_count',
   'pocket_network_DNA_NPS',
+  'no_debated_proposals_count',
   'v1_mainnet_launch_date',
   'voters_to_control_DAO_count',
   'pokt_liquidity_amount',
@@ -32,7 +33,6 @@ const GoogleSheetMetricsNameEnum: Array<GoogleSheetMetricsName> = [
 ];
 
 @Schema({
-  _id: false,
   versionKey: false,
   timestamps: false,
   collection: GoogleSheet.name,
@@ -44,8 +44,8 @@ export class GoogleSheet {
   @Prop({ index: true, enum: GoogleSheetMetricsNameEnum })
   metric_name: GoogleSheetMetricsName;
 
-  @Prop()
-  metric_value: number;
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  metric_value: string | number;
 }
 
 export const GoogleSheetSchema = SchemaFactory.createForClass(GoogleSheet);

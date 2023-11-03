@@ -12,13 +12,14 @@ import { Retrievers } from './retriever/types/common.type';
 import { RETRIEVERS } from './retriever/retriever.constant';
 import {
   CompoundMetricsOutput,
-  Outputs,
+  EssentialMetricsOutputs,
   RetrieversConfig,
 } from './types/retrieve.type';
 import { defaults, map, reduce } from 'lodash';
 import moment from 'moment';
 import { AggregationService } from './aggregation.service';
 import { StoreService } from './store.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RetrieveService {
@@ -28,6 +29,7 @@ export class RetrieveService {
     private readonly logger: WinstonProvider,
     private readonly aggregationService: AggregationService,
     private readonly storeService: StoreService,
+    private readonly config: ConfigService,
   ) {}
 
   private currentYesterdayDateTime() {
@@ -50,7 +52,7 @@ export class RetrieveService {
 
   private getGoogleSheetOptions(): GoogleSheetOptions {
     return {
-      spreadSheetID: '',
+      spreadSheetID: this.config.get<string>('GOOGLE_SPREAD_SHEET_ID'),
     };
   }
 
@@ -58,8 +60,29 @@ export class RetrieveService {
     return {
       start_date: this.startOfYesterday(),
       end_date: this.endOfYesterday(),
+      date_format: 'YYYY-MM-DDTHH:mm:ss.SSSZ',
       unit_time: 'day',
       interval: 1,
+      pagination: {
+        filter: {
+          operator: 'AND',
+          properties: [
+            {
+              operator: 'IN',
+              property: 'address',
+              type: 'STRING',
+              value: '["6386713deb27b609daad5e2e32ee6591753e5f4e"]',
+            },
+            {
+              operator: 'GTE',
+              property: 'parse_time',
+              type: 'DATE',
+              value: this.startOfYesterday(),
+            },
+          ],
+        },
+        limit: 1,
+      },
     };
   }
 
@@ -102,48 +125,50 @@ export class RetrieveService {
   }
 
   private calculateCompoundMetricsOutput(
-    outputs: Outputs,
+    date: string,
+    essentialMetricsOutputs: EssentialMetricsOutputs,
   ): CompoundMetricsOutput {
     const aggregationServiceProxy = this.aggregationService;
 
     return {
       dao_treasury: this.aggregationService.daoTreasury(
-        outputs.poktScanOutput.income,
-        outputs.poktScanOutput.expense,
-        outputs.coinGeckoOutput.pokt_price,
+        essentialMetricsOutputs?.poktScanOutput?.DAO_total_balance,
+        essentialMetricsOutputs?.coinGeckoOutput?.pokt_price,
       ),
       protocol_revenue: this.aggregationService.protocolRevenue(
-        outputs.poktScanOutput.token_burn,
-        outputs.coinGeckoOutput.pokt_price,
+        essentialMetricsOutputs?.poktScanOutput?.token_burn,
+        essentialMetricsOutputs?.coinGeckoOutput?.pokt_price,
       ),
       get annualised_yield() {
         return aggregationServiceProxy.annualisedYield(
           this.protocol_revenue,
-          outputs.poktScanOutput.circulating_supply,
+          essentialMetricsOutputs?.poktScanOutput?.circulating_supply,
         );
       },
       get coverage_ratio() {
         return aggregationServiceProxy.coverageRatio(
           this.protocol_revenue,
-          outputs.poktScanOutput.token_issuance,
+          essentialMetricsOutputs?.poktScanOutput?.token_issuance,
         );
       },
       voter_participation_ratio:
         this.aggregationService.voterParticipationRatio(
-          outputs.snapShotOutput.votes_count,
-          outputs.snapShotOutput.voters_count,
+          essentialMetricsOutputs?.snapShotOutput?.votes_count,
+          essentialMetricsOutputs?.snapShotOutput?.voters_count,
         ),
       percentage_of_projects_self_reporting:
         this.aggregationService.percentageOfProjectsSelfReporting(
-          'date',
-          outputs.googleSheetOutput.projects_gave_update_count.value,
-          outputs.googleSheetOutput.projects_count.value,
+          date,
+          essentialMetricsOutputs?.googleSheetOutput
+            ?.projects_gave_update_count,
+          essentialMetricsOutputs?.googleSheetOutput?.projects_count,
         ),
       get dao_governance_asset_value() {
         return aggregationServiceProxy.daoGovernanceAssetValue(
           this.voter_participation_ratio,
           this.dao_treasury,
-          outputs.googleSheetOutput.voter_power_concentration_index.value,
+          essentialMetricsOutputs?.googleSheetOutput
+            ?.voter_power_concentration_index.value,
         );
       },
     };
@@ -160,7 +185,7 @@ export class RetrieveService {
       const checkingDateTime = this.startOfYesterday();
       // Calculate essential metrics
       const retrieversConfig = this.generateRetrieversConfig();
-      const outputs = reduce(
+      const essentialMetricsOutputs = reduce(
         await Promise.allSettled(
           map(retrieversConfig, (retrieverConfig) => retrieverConfig.promise),
         ),
@@ -189,29 +214,41 @@ export class RetrieveService {
             );
           }
         },
-        {} as Outputs,
+        {} as EssentialMetricsOutputs,
+      );
+
+      this.logger.debug(
+        `Essential metrics: ${JSON.stringify(essentialMetricsOutputs)}`,
+        RetrieveService.name,
       );
 
       // Calculate compound metrics output
-      const compoundMetricsOutput =
-        this.calculateCompoundMetricsOutput(outputs);
+      const compoundMetricsOutput = this.calculateCompoundMetricsOutput(
+        checkingDateTime,
+        essentialMetricsOutputs,
+      );
+
+      this.logger.debug(
+        `Compound metrics: ${JSON.stringify(compoundMetricsOutput)}`,
+        RetrieveService.name,
+      );
 
       // Store essential and compound metrics
       await Promise.all([
         this.storeService.storeLatestCoinGeckoMetrics(
           checkingDateTime,
-          outputs.coinGeckoOutput,
+          essentialMetricsOutputs.coinGeckoOutput,
         ),
         this.storeService.storeLatestSnapShotMetrics(
           checkingDateTime,
-          outputs.snapShotOutput,
+          essentialMetricsOutputs.snapShotOutput,
         ),
         this.storeService.storeLatestPoktScanMetrics(
           checkingDateTime,
-          outputs.poktScanOutput,
+          essentialMetricsOutputs.poktScanOutput,
         ),
         this.storeService.storeLatestGoogleSheetMetrics(
-          outputs.googleSheetOutput,
+          essentialMetricsOutputs.googleSheetOutput,
         ),
         this.storeService.storeLatestCompoundMetrics(
           checkingDateTime,
