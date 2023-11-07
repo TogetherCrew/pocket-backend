@@ -14,7 +14,9 @@ export type GoogleSheetMetricsName =
   | 'pokt_liquidity_amount'
   | 'twitter_followers_count'
   | 'community_NPS'
-  | 'voter_power_concentration_index';
+  | 'voter_power_concentration_index'
+  | 'no_proposals_core'
+  | 'no_proposals_community';
 
 const GoogleSheetMetricsNameEnum: Array<GoogleSheetMetricsName> = [
   'projects_working_in_open_count',
@@ -30,6 +32,8 @@ const GoogleSheetMetricsNameEnum: Array<GoogleSheetMetricsName> = [
   'twitter_followers_count',
   'community_NPS',
   'voter_power_concentration_index',
+  'no_proposals_core',
+  'no_proposals_community',
 ];
 
 @Schema({

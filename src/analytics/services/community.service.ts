@@ -221,10 +221,13 @@ export class CommunityService {
     return {
       metrics: {
         velocity_of_experiments_v_no_debated_proposals: {
-          values:
-            this.commonService.serializeToStackedChartMetricValues(
-              googleMetrics,
-            ),
+          values: this.commonService.serializeToStackedChartMetricValues(
+            googleMetrics,
+            {
+              velocity_of_experiments: 'Velocity of experiments',
+              no_debated_proposals_count: 'No debated proposals count',
+            },
+          ),
         },
       },
     };

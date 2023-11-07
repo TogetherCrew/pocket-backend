@@ -10,7 +10,6 @@ import {
   StackedChartMetricValue,
 } from '../interfaces/common.interface';
 
-import { SnapShot } from '@common/database/schemas/snap-shot.schema';
 import { map } from 'lodash';
 import {
   CollaborationMetricsResponse,
@@ -28,8 +27,6 @@ export class GovernanceService {
     private readonly googleModel: Model<GoogleSheet>,
     @InjectModel(CompoundMetrics.name)
     private readonly compoundModel: Model<CompoundMetrics>,
-    @InjectModel(SnapShot.name)
-    private readonly snapshotModel: Model<SnapShot>,
     @InjectModel(PoktScan.name)
     private readonly poktscanModel: Model<PoktScan>,
   ) {}
@@ -122,39 +119,26 @@ export class GovernanceService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const snapshotMetrics = await this.snapshotModel
-      .find(
-        {
-          date: {
-            $gte: new Date(dateTimeRange.start),
-            $lte: new Date(dateTimeRange.end),
-          },
+    const googleMetrics = await this.googleModel
+      .find({
+        metric_name: { $in: ['no_proposals_core', 'no_proposals_community'] },
+        date: {
+          $gte: new Date(dateTimeRange.start),
+          $lte: new Date(dateTimeRange.end),
         },
-        ['date', 'community_proposals_count', 'core_proposals_count'],
-      )
+      })
       .sort({ date: 1 });
-
-    const proposalsFromCommunityVCoreContributors: Array<StackedChartMetricValue> =
-      map(snapshotMetrics, (metric) => {
-        return {
-          date: metric.date.toISOString(),
-          values: [
-            {
-              name: 'Proposals from community',
-              value: metric.community_proposals_count,
-            },
-            {
-              name: 'Core contributors',
-              value: metric.core_proposals_count,
-            },
-          ],
-        };
-      });
 
     return {
       metrics: {
         proposals_from_community_v_core_contributors: {
-          values: proposalsFromCommunityVCoreContributors,
+          values: this.commonService.serializeToStackedChartMetricValues(
+            googleMetrics,
+            {
+              no_proposals_core: 'Core contributors',
+              no_proposals_community: 'Proposals from community',
+            },
+          ),
         },
       },
     };
