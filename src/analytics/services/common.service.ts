@@ -119,13 +119,16 @@ export class CommonService {
     return barChartMetricsValues;
   }
 
-  serializeToStackedChartMetricValues<T>(input_list: Array<T>) {
+  serializeToStackedChartMetricValues<T>(
+    input_list: Array<T>,
+    metrics_name_map: Record<string, string>,
+  ) {
     const groupByDate: Record<string, Array<StackedBarValue>> = {};
     const stackedChartMetricValues: Array<StackedChartMetricValue> = [];
 
     for (let index = 0; index < input_list.length; index++) {
       const metricDate = input_list[index]['date'].toISOString();
-      const metricName = input_list[index]['metric_name'];
+      const metricName = metrics_name_map[input_list[index]['metric_name']];
       const metricValue = input_list[index]['metric_value'];
 
       if (metricDate in groupByDate) {
