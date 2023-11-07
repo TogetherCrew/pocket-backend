@@ -16,6 +16,7 @@ import { DatabaseModule } from '@common/database/database.module';
     WinstonModule.forRootAsync({
       useFactory: (config: ConfigService) => {
         const grafanaServiceName = config.get<string>('GRAFANA_SERVICE_NAME');
+        const lokiAuth = config.get<string>('GRAFANA_LOKI_AUTH');
 
         return {
           level: config.get<string>('DEBUG_MODE') === 'true' ? 'debug' : 'info',
@@ -29,9 +30,10 @@ import { DatabaseModule } from '@common/database/database.module';
               ? [
                   new LokiTransport({
                     host: config.get<string>('GRAFANA_LOKI_HOST'),
+                    basicAuth: lokiAuth?.length > 0 ? lokiAuth : undefined,
                     format: format.json(),
                     labels: {
-                      'service-name':
+                      serviceName:
                         grafanaServiceName?.length > 0
                           ? grafanaServiceName
                           : 'pocket-backend',
