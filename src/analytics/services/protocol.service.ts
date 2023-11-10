@@ -51,6 +51,7 @@ export class ProtocolService {
     const CompoundMetrics = await this.compoundModel
       .find({
         metric_name: 'protocol_revenue',
+        metric_value: { $ne: 0 },
         date: {
           $gte: new Date(dateTimeRange.start),
           $lte: new Date(dateTimeRange.end),
