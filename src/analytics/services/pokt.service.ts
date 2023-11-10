@@ -57,6 +57,7 @@ export class PoktService {
     const compoundMetrics = await this.compoundModel
       .find({
         metric_name: 'coverage_ratio',
+        metric_value: { $ne: 0 },
         date: {
           $gte: new Date(dateTimeRange.start),
           $lte: new Date(dateTimeRange.end),
@@ -83,6 +84,7 @@ export class PoktService {
     const compoundMetrics = await this.compoundModel
       .find({
         metric_name: 'annualised_yield',
+        metric_value: { $ne: 0 },
         date: {
           $gte: new Date(dateTimeRange.start),
           $lte: new Date(dateTimeRange.end),
