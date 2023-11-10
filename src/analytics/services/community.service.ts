@@ -162,8 +162,6 @@ export class CommunityService {
   ): Promise<TransparencyMetricsResponse> {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
-    const lastMonthRange =
-      this.commonService.dateTimeRangeFromTimePeriod('last-month');
 
     const [googleMetrics, compoundMetrics] = await Promise.all([
       this.googleModel
@@ -179,8 +177,8 @@ export class CommunityService {
         .find({
           metric_name: 'percentage_of_projects_self_reporting',
           date: {
-            $gte: new Date(lastMonthRange.start),
-            $lte: new Date(lastMonthRange.end),
+            $gte: new Date(dateTimeRange.start),
+            $lte: new Date(dateTimeRange.end),
           },
         })
         .sort({ date: 1 }),
