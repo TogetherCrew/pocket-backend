@@ -53,6 +53,7 @@ export class GovernanceService {
               $gte: new Date(dateTimeRange.start),
               $lte: new Date(dateTimeRange.end),
             },
+            validators_to_control_protocol_count: { $ne: null },
           },
           ['date', 'validators_to_control_protocol_count'],
         )
