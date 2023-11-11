@@ -62,11 +62,12 @@ export interface PoktScanSupplyResponse {
     };
   };
 }
-export interface PoktScanStackedNodesResponse {
+export interface PoktScanLargestNodeRunnersResponse {
   data: {
-    stackedNodes: {
-      chains: Array<{
-        nodes_count: number;
+    ListLargestNodeRunners: {
+      items: Array<{
+        service_domain: string;
+        validators: number;
       }>;
     };
   };
