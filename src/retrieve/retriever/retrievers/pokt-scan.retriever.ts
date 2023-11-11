@@ -3,10 +3,10 @@ import { BaseRetriever } from '../interfaces/common.interface';
 import {
   PoktScanDAOTreasuryResponse,
   PoktScanDAOTreasuryVariables,
+  PoktScanLargestNodeRunnersResponse,
   PoktScanOptions,
   PoktScanOutput,
   PoktScanRecord,
-  PoktScanStackedNodesResponse,
   PoktScanSupplyResponse,
   PoktScanSupplyVariables,
 } from '../interfaces/pokt-scan.interface';
@@ -14,7 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { WinstonProvider } from '@common/winston/winston.provider';
-import { reduce } from 'lodash';
+
 @Injectable()
 export class PoktScanRetriever
   implements BaseRetriever<PoktScanOptions, PoktScanOutput>
@@ -89,12 +89,13 @@ export class PoktScanRetriever
     }`;
   }
 
-  private getStackedNodesGQLQuery(): string {
+  private getLargestNodeRunnersGQLQuery(): string {
     return `
-    query {
-      stackedNodes: GetStakedNodesAndAppsByChain(input: {}) {
-        chains: staked_by_chains {
-          nodes_count: nodes    
+    query ListLargestNodeRunners {
+      ListLargestNodeRunners(input: { sort_by: validators }) {
+        items {
+          service_domain
+          validators
         }
       }
     }`;
@@ -122,28 +123,29 @@ export class PoktScanRetriever
     return this.request<PoktScanSupplyResponse>(query, variables);
   }
 
-  private async getStackedNodesProps() {
-    const query = this.getStackedNodesGQLQuery();
+  private async getLargestNodeRunnersProps() {
+    const query = this.getLargestNodeRunnersGQLQuery();
 
-    return this.request<PoktScanStackedNodesResponse>(query);
+    return this.request<PoktScanLargestNodeRunnersResponse>(query);
   }
 
   private calculateValidatorsCountToControlProtocol(
-    chains: Array<{ nodes_count: number }>,
+    items: Array<{ service_domain: string; validators: number }>,
   ): number {
-    const nodes_count = reduce(
-      chains,
-      (previous, current) => {
-        return previous + current.nodes_count;
-      },
-      0,
-    );
+    let node_count = 0;
 
-    if (nodes_count >= 1000) {
-      return 660;
-    } else {
-      return Math.ceil(nodes_count * 0.66);
+    for (
+      let index = 0, validators = 0;
+      index < items.length && validators < 667;
+      index++
+    ) {
+      const node_validators = items[index].validators;
+
+      validators += node_validators;
+      node_count += 1;
     }
+
+    return node_count;
   }
 
   private serializeFloatValue(amount: number): number {
@@ -153,7 +155,7 @@ export class PoktScanRetriever
   private serializeResponse(
     DAO_treasury_response: PoktScanDAOTreasuryResponse,
     supply_response: PoktScanSupplyResponse,
-    stacked_nodes_response: PoktScanStackedNodesResponse,
+    stacked_nodes_response: PoktScanLargestNodeRunnersResponse,
   ): PoktScanOutput {
     return {
       DAO_total_balance: this.serializeFloatValue(
@@ -170,7 +172,7 @@ export class PoktScanRetriever
       ),
       validators_to_control_protocol_count:
         this.calculateValidatorsCountToControlProtocol(
-          stacked_nodes_response.data.stackedNodes.chains,
+          stacked_nodes_response.data.ListLargestNodeRunners.items,
         ),
     };
   }
@@ -212,7 +214,7 @@ export class PoktScanRetriever
       await Promise.all([
         this.getDAOTreasuryProps(DAOTreasuryVariables),
         this.getSupplyProps(supplyVariables),
-        this.getStackedNodesProps(),
+        this.getLargestNodeRunnersProps(),
       ]);
 
     return this.serializeResponse(
