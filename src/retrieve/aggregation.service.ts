@@ -22,7 +22,7 @@ export class AggregationService {
       [protocol_revenue, circulating_supply],
       (item) => !isUndefined(item),
     ) && circulating_supply !== 0
-      ? protocol_revenue / circulating_supply
+      ? (protocol_revenue / circulating_supply) * 52
       : undefined;
   }
 
