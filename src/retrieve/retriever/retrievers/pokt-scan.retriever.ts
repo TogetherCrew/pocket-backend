@@ -4,6 +4,8 @@ import {
   PoktScanDAOTreasuryResponse,
   PoktScanDAOTreasuryVariables,
   PoktScanLargestNodeRunnersResponse,
+  PoktScanListRelaysResponse,
+  PoktScanListRelaysVariables,
   PoktScanOptions,
   PoktScanOutput,
   PoktScanRecord,
@@ -101,6 +103,22 @@ export class PoktScanRetriever
     }`;
   }
 
+  private getListRelaysGQLQuery(): string {
+    return `
+    query($listSummaryInput: ListRelaysByGatewayAndUnitBetweenDatesInput!) {
+      ListRelays: ListRelaysByGatewayAndUnitBetweenDates(input: $listSummaryInput) {
+        points {
+          point
+          total_relays
+          relays_by_gateway {
+            gateway
+            total_relays
+          }
+        }
+      }
+    }`;
+  }
+
   private reduceRecords(records: Array<Partial<PoktScanRecord>>): number {
     let finalValue = 0;
 
@@ -129,6 +147,12 @@ export class PoktScanRetriever
     return this.request<PoktScanLargestNodeRunnersResponse>(query);
   }
 
+  private async getListRelaysProps(variables: PoktScanListRelaysVariables) {
+    const query = this.getListRelaysGQLQuery();
+
+    return this.request<PoktScanListRelaysResponse>(query, variables);
+  }
+
   private calculateValidatorsCountToControlProtocol(
     items: Array<{ service_domain: string; validators: number }>,
   ): number {
@@ -148,6 +172,36 @@ export class PoktScanRetriever
     return node_count;
   }
 
+  private calculateRelaysPercentages(
+    input: {
+      point: string;
+      total_relays: number;
+      relays_by_gateway: Array<{
+        gateway: number;
+        total_relays: number;
+      }>;
+    },
+    type: 'groves' | 'nodies',
+  ) {
+    let output = 0;
+
+    if (type === 'groves') {
+      const grove = input.relays_by_gateway.filter(
+        (gateway) => gateway.gateway === 1,
+      )[0];
+
+      output = grove.total_relays / input.total_relays;
+    } else {
+      const node = input.relays_by_gateway.filter(
+        (gateway) => gateway.gateway === 2,
+      )[0];
+
+      output = node.total_relays / input.total_relays;
+    }
+
+    return output;
+  }
+
   private serializeFloatValue(amount: number): number {
     return amount / 1000000;
   }
@@ -156,6 +210,7 @@ export class PoktScanRetriever
     DAO_treasury_response: PoktScanDAOTreasuryResponse,
     supply_response: PoktScanSupplyResponse,
     stacked_nodes_response: PoktScanLargestNodeRunnersResponse,
+    list_relays_response: PoktScanListRelaysResponse,
   ): PoktScanOutput {
     return {
       DAO_total_balance: this.serializeFloatValue(
@@ -174,6 +229,14 @@ export class PoktScanRetriever
         this.calculateValidatorsCountToControlProtocol(
           stacked_nodes_response.data.ListLargestNodeRunners.items,
         ),
+      groves_relays_percentage: this.calculateRelaysPercentages(
+        list_relays_response.data.ListRelays.points[0],
+        'groves',
+      ),
+      nodies_relays_percentage: this.calculateRelaysPercentages(
+        list_relays_response.data.ListRelays.points[0],
+        'nodies',
+      ),
     };
   }
 
@@ -206,21 +269,45 @@ export class PoktScanRetriever
     };
   }
 
+  private serializeListRelaysVariables(
+    options: PoktScanOptions,
+  ): PoktScanListRelaysVariables {
+    return {
+      listSummaryInput: {
+        start_date: options.start_date,
+        end_date: options.end_date,
+        date_format: options.date_format,
+        ...(options.interval && { interval: options.interval }),
+        ...(options.unit_time && { unit_time: options.unit_time }),
+        ...(options.exclusive_date && {
+          exclusive_date: options.exclusive_date,
+        }),
+      },
+    };
+  }
+
   async retrieve(options: PoktScanOptions): Promise<PoktScanOutput> {
     const DAOTreasuryVariables = this.serializeDAOTreasuryVariables(options);
     const supplyVariables = this.serializeSupplyVariables(options);
+    const listRelaysVariables = this.serializeListRelaysVariables(options);
 
-    const [DAOTreasuryResponse, supplyResponse, stackedNodesResponse] =
-      await Promise.all([
-        this.getDAOTreasuryProps(DAOTreasuryVariables),
-        this.getSupplyProps(supplyVariables),
-        this.getLargestNodeRunnersProps(),
-      ]);
+    const [
+      DAOTreasuryResponse,
+      supplyResponse,
+      stackedNodesResponse,
+      listRelaysResponse,
+    ] = await Promise.all([
+      this.getDAOTreasuryProps(DAOTreasuryVariables),
+      this.getSupplyProps(supplyVariables),
+      this.getLargestNodeRunnersProps(),
+      this.getListRelaysProps(listRelaysVariables),
+    ]);
 
     return this.serializeResponse(
       DAOTreasuryResponse,
       supplyResponse,
       stackedNodesResponse,
+      listRelaysResponse,
     );
   }
 }
