@@ -44,3 +44,8 @@ export interface StackedChartMetricValue {
 export interface StackedChartMetricResponse {
   values: Array<StackedChartMetricValue>;
 }
+
+export interface ProgressBarMetricResponse {
+  current: number;
+  total: number;
+}

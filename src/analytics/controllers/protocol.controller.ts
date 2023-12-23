@@ -6,11 +6,6 @@ import { TimePeriodEnum, TimePeriod } from '../types/common.type';
 export class ProtocolController {
   constructor(private readonly protocolService: ProtocolService) {}
 
-  @Get('protocol-upgrade')
-  getProtocolUpgradeMetrics() {
-    return this.protocolService.getProtocolUpgradeMetrics();
-  }
-
   @Get('demand')
   getDemandMetrics(
     @Query('time_period', new ParseEnumPipe(TimePeriodEnum))
