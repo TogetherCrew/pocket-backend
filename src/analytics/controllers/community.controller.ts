@@ -37,4 +37,9 @@ export class CommunityController {
   ) {
     return this.communityService.getAdaptabilityMetrics(timePeriod);
   }
+
+  @Get('quarterly-ERA-allocation')
+  getQuarterlyERAAllocationMetrics() {
+    return this.communityService.getQuarterlyERAAllocationMetrics();
+  }
 }

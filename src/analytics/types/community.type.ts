@@ -3,6 +3,7 @@ import {
   AdaptabilityMetrics,
   AwarenessMetrics,
   CommunityCollaborationMetrics,
+  QuarterlyERAAllocationMetrics,
   TransparencyMetrics,
 } from '../interfaces/community.interface';
 
@@ -14,3 +15,6 @@ export type AwarenessMetricsResponse = MetricsResponse<AwarenessMetrics>;
 export type TransparencyMetricsResponse = MetricsResponse<TransparencyMetrics>;
 
 export type AdaptabilityMetricsResponse = MetricsResponse<AdaptabilityMetrics>;
+
+export type QuarterlyERAAllocationMetricsResponse =
+  MetricsResponse<QuarterlyERAAllocationMetrics>;

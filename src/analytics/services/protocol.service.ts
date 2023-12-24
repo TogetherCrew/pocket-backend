@@ -1,46 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { TimePeriod } from '../types/common.type';
-import { BarChartMetricValue } from '../interfaces/common.interface';
 import { CompoundMetrics } from '@common/database/schemas/compound-metrics.schema';
-import { GoogleSheet } from '@common/database/schemas/google-sheet.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CommonService } from './common.service';
-import {
-  DemandMetricsResponse,
-  ProtocolUpgradeMetricsResponse,
-} from '../types/protocol.type';
+import { DemandMetricsResponse } from '../types/protocol.type';
+import { PoktScan } from '@common/database/schemas/pokt-scan.schema';
+import { StackedChartMetricValue } from '../interfaces/common.interface';
 
 @Injectable()
 export class ProtocolService {
   constructor(
     private readonly commonService: CommonService,
 
-    @InjectModel(GoogleSheet.name)
-    private readonly googleModel: Model<GoogleSheet>,
     @InjectModel(CompoundMetrics.name)
     private readonly compoundModel: Model<CompoundMetrics>,
+    @InjectModel(PoktScan.name)
+    private readonly poktModel: Model<PoktScan>,
   ) {}
-
-  async getProtocolUpgradeMetrics(): Promise<ProtocolUpgradeMetricsResponse> {
-    const latestMetric = await this.googleModel
-      .findOne({
-        metric_name: 'v1_mainnet_launch_date',
-      })
-      .sort({ date: -1 });
-
-    const v1MainnetLaunchDate = latestMetric
-      ? String(latestMetric.metric_value)
-      : undefined;
-
-    return {
-      metrics: {
-        v1_mainnet_launch_date: {
-          value: v1MainnetLaunchDate,
-        },
-      },
-    };
-  }
 
   async getDemandMetrics(
     timePeriod: TimePeriod,
@@ -48,29 +25,49 @@ export class ProtocolService {
     const dateTimeRange =
       this.commonService.dateTimeRangeFromTimePeriod(timePeriod);
 
-    const CompoundMetrics = await this.compoundModel
-      .find({
-        metric_name: 'protocol_revenue',
-        metric_value: { $ne: 0 },
-        date: {
-          $gte: new Date(dateTimeRange.start),
-          $lte: new Date(dateTimeRange.end),
-        },
-      })
-      .sort({ date: 1 });
+    const [CompoundMetrics, PoktMetrics] = await Promise.all([
+      this.compoundModel
+        .find({
+          metric_name: 'protocol_revenue',
+          metric_value: { $ne: 0 },
+          date: {
+            $gte: new Date(dateTimeRange.start),
+            $lte: new Date(dateTimeRange.end),
+          },
+        })
+        .sort({ date: 1 }),
+      this.poktModel
+        .find(
+          {
+            date: {
+              $gte: new Date(dateTimeRange.start),
+              $lte: new Date(dateTimeRange.end),
+            },
+            groves_relays_percentage: { $ne: null },
+            nodies_relays_percentage: { $ne: null },
+          },
+          ['date', 'groves_relays_percentage', 'nodies_relays_percentage'],
+        )
+        .sort({ date: 1 }),
+    ]);
 
-    const datesInRange = this.commonService.enumerateDaysBetweenRange(
-      dateTimeRange.start,
-      dateTimeRange.end,
-    );
-    const gatewayOperatorShareOfRelays: Array<BarChartMetricValue> = [];
+    const gatewayRelayValues: Array<StackedChartMetricValue> = [];
 
-    for (let index = 0; index < datesInRange.length; index++) {
-      const date = datesInRange[index];
+    for (let index = 0; index < PoktMetrics.length; index++) {
+      const item = PoktMetrics[index];
 
-      gatewayOperatorShareOfRelays.push({
-        date,
-        value: 1,
+      gatewayRelayValues.push({
+        date: item.date.toISOString(),
+        values: [
+          {
+            name: 'Groves',
+            value: item.groves_relays_percentage,
+          },
+          {
+            name: 'Nodies',
+            value: item.nodies_relays_percentage,
+          },
+        ],
       });
     }
 
@@ -81,7 +78,7 @@ export class ProtocolService {
             this.commonService.serializeToBarChartMetricValues(CompoundMetrics),
         },
         gateway_operator_share_of_relays: {
-          values: gatewayOperatorShareOfRelays,
+          values: gatewayRelayValues,
         },
       },
     };
