@@ -25,9 +25,8 @@ describe('Protocol Controller', () => {
   });
 
   describe.each`
-    ctrl_fn                        | service_fn                     | time_period
-    ${'getProtocolUpgradeMetrics'} | ${'getProtocolUpgradeMetrics'} | ${undefined}
-    ${'getDemandMetrics'}          | ${'getDemandMetrics'}          | ${'last-year'}
+    ctrl_fn               | service_fn            | time_period
+    ${'getDemandMetrics'} | ${'getDemandMetrics'} | ${'last-year'}
   `('When $ctrl_fn method called', ({ ctrl_fn, service_fn, time_period }) => {
     let returnValue;
 

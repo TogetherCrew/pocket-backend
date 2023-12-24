@@ -30,6 +30,7 @@ describe('Community Controller', () => {
     ${'getAwarenessMetrics'}              | ${'getAwarenessMetrics'}              | ${'last-year'}
     ${'getTransparencyMetrics'}           | ${'getTransparencyMetrics'}           | ${'last-year'}
     ${'getAdaptabilityMetrics'}           | ${'getAdaptabilityMetrics'}           | ${'last-year'}
+    ${'getQuarterlyERAAllocationMetrics'} | ${'getQuarterlyERAAllocationMetrics'} | ${undefined}
   `('When $ctrl_fn method called', ({ ctrl_fn, service_fn, time_period }) => {
     let returnValue;
 
@@ -42,7 +43,11 @@ describe('Community Controller', () => {
     });
 
     test(`Should be called ${service_fn} method of service`, () => {
-      expect(service[service_fn]).toBeCalledWith(time_period);
+      if (time_period === undefined) {
+        expect(service[service_fn]).toBeCalled();
+      } else {
+        expect(service[service_fn]).toBeCalledWith(time_period);
+      }
     });
 
     test('Should return metrics values', () => {
