@@ -5,10 +5,7 @@ import { CompoundMetrics } from '@common/database/schemas/compound-metrics.schem
 import { GoogleSheet } from '@common/database/schemas/google-sheet.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  BarChartMetricValue,
-  StackedChartMetricValue,
-} from '../interfaces/common.interface';
+import { BarChartMetricValue } from '../interfaces/common.interface';
 
 import { map } from 'lodash';
 import {

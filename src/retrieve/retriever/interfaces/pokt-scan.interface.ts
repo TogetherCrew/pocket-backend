@@ -72,12 +72,29 @@ export interface PoktScanLargestNodeRunnersResponse {
     };
   };
 }
+
+export interface PoktScanListRelaysResponse {
+  data: {
+    ListRelays: {
+      points: Array<{
+        point: string;
+        total_relays: number;
+        relays_by_gateway: Array<{
+          gateway: number;
+          total_relays: number;
+        }>;
+      }>;
+    };
+  };
+}
 export interface PoktScanOutput {
   DAO_total_balance: number;
   token_burn: number;
   token_issuance: number;
   circulating_supply: number;
   validators_to_control_protocol_count: number;
+  groves_relays_percentage: number;
+  nodies_relays_percentage: number;
 }
 export interface PoktScanDAOTreasuryVariables {
   pagination: PaginationInput;
@@ -86,6 +103,10 @@ export interface PoktScanDAOTreasuryVariables {
 export interface PoktScanSupplyVariables {
   listSummaryInput: SummaryWithBlockInput;
   supplyInput: GetSupplySummaryFromStartDateInput;
+}
+
+export interface PoktScanListRelaysVariables {
+  listSummaryInput: SummaryWithBlockInput;
 }
 
 export interface PoktScanOptions

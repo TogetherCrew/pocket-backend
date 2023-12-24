@@ -8,7 +8,8 @@ export type GoogleSheetMetricsName =
   | 'projects_delivering_impact'
   | 'velocity_of_experiments'
   | 'pocket_network_DNA_NPS'
-  | 'v1_mainnet_launch_date'
+  | 'budget_spend_amount'
+  | 'total_budget_amount'
   | 'voters_to_control_DAO_count'
   | 'no_debated_proposals_count'
   | 'pokt_liquidity_amount'
@@ -26,7 +27,8 @@ const GoogleSheetMetricsNameEnum: Array<GoogleSheetMetricsName> = [
   'velocity_of_experiments',
   'pocket_network_DNA_NPS',
   'no_debated_proposals_count',
-  'v1_mainnet_launch_date',
+  'budget_spend_amount',
+  'total_budget_amount',
   'voters_to_control_DAO_count',
   'pokt_liquidity_amount',
   'twitter_followers_count',

@@ -14,6 +14,7 @@ import {
   AdaptabilityMetricsResponse,
   AwarenessMetricsResponse,
   CommunityCollaborationMetricsResponse,
+  QuarterlyERAAllocationMetricsResponse,
   TransparencyMetricsResponse,
 } from '../types/community.type';
 import { SnapShot } from '@common/database/schemas/snap-shot.schema';
@@ -226,6 +227,48 @@ export class CommunityService {
               no_debated_proposals_count: 'No debated proposals count',
             },
           ),
+        },
+      },
+    };
+  }
+
+  async getQuarterlyERAAllocationMetrics(): Promise<QuarterlyERAAllocationMetricsResponse> {
+    const googleMetrics = await this.googleModel.aggregate([
+      {
+        $match: {
+          metric_name: { $in: ['budget_spend_amount', 'total_budget_amount'] },
+        },
+      },
+      {
+        $sort: { date: -1 },
+      },
+      {
+        $group: {
+          _id: '$metric_name',
+          latestRecord: { $first: '$$ROOT' },
+        },
+      },
+      {
+        $replaceRoot: { newRoot: '$latestRecord' },
+      },
+    ]);
+
+    let budget_spend_amount: number;
+    let total_budget_amount: number;
+
+    for (let index = 0; index < googleMetrics.length; index++) {
+      if (googleMetrics[index].metric_name === 'budget_spend_amount') {
+        budget_spend_amount = googleMetrics[index].metric_value;
+      } else {
+        total_budget_amount = googleMetrics[index].metric_value;
+      }
+    }
+
+    return {
+      metrics: {
+        amount_of_budget_spent_vs_available: {
+          current: budget_spend_amount,
+          total: total_budget_amount,
         },
       },
     };

@@ -1,10 +1,4 @@
 import { MetricsResponse } from '../interfaces/common.interface';
-import {
-  ProtocolUpgradeMetrics,
-  DemandMetrics,
-} from '../interfaces/protocol.interface';
-
-export type ProtocolUpgradeMetricsResponse =
-  MetricsResponse<ProtocolUpgradeMetrics>;
+import { DemandMetrics } from '../interfaces/protocol.interface';
 
 export type DemandMetricsResponse = MetricsResponse<DemandMetrics>;

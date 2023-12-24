@@ -1,6 +1,7 @@
 import {
   BarChartMetricResponse,
   NumberTypeMetricResponse,
+  ProgressBarMetricResponse,
   StackedChartMetricResponse,
 } from './common.interface';
 
@@ -21,4 +22,8 @@ export interface TransparencyMetrics {
 
 export interface AdaptabilityMetrics {
   velocity_of_experiments_v_no_debated_proposals: StackedChartMetricResponse;
+}
+
+export interface QuarterlyERAAllocationMetrics {
+  amount_of_budget_spent_vs_available: ProgressBarMetricResponse;
 }

@@ -23,6 +23,12 @@ export class PoktScan {
 
   @Prop()
   validators_to_control_protocol_count: number;
+
+  @Prop()
+  groves_relays_percentage: number;
+
+  @Prop()
+  nodies_relays_percentage: number;
 }
 
 export const PoktScanSchema = SchemaFactory.createForClass(PoktScan);
