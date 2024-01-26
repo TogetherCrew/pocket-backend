@@ -164,17 +164,20 @@ export class RetrieveService {
           essentialMetricsOutputs?.googleSheetOutput?.projects_count,
         ),
       get dao_governance_asset_value() {
+        const voterPowerConcentrationIndex =
+          essentialMetricsOutputs?.googleSheetOutput
+            ?.voter_power_concentration_index;
         return aggregationServiceProxy.daoGovernanceAssetValue(
           this.voter_participation_ratio,
           this.dao_treasury,
-          essentialMetricsOutputs?.googleSheetOutput
-            ?.voter_power_concentration_index.value,
+          voterPowerConcentrationIndex[voterPowerConcentrationIndex.length - 1]
+            .value,
         );
       },
     };
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_HOUR)
   async retrieveAndStoreMetricsValue() {
     try {
       this.logger.log(
@@ -247,7 +250,7 @@ export class RetrieveService {
           checkingDateTime,
           essentialMetricsOutputs.poktScanOutput,
         ),
-        this.storeService.storeLatestGoogleSheetMetrics(
+        this.storeService.replaceAllGoogleSheetMetrics(
           essentialMetricsOutputs.googleSheetOutput,
         ),
         this.storeService.storeLatestCompoundMetrics(

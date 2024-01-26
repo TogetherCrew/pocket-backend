@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GoogleSheetSerializedValues } from './retriever/types/google-sheet.type';
 import moment from 'moment';
-import { every, isUndefined } from 'lodash';
+import { every, isUndefined, reduce } from 'lodash';
 
 @Injectable()
 export class AggregationService {
@@ -63,21 +63,33 @@ export class AggregationService {
 
   percentageOfProjectsSelfReporting(
     date: string,
-    projects_gave_update_count: GoogleSheetSerializedValues,
-    projects_count: GoogleSheetSerializedValues,
+    projects_gave_update_counts: Array<GoogleSheetSerializedValues>,
+    projects_counts: Array<GoogleSheetSerializedValues>,
   ) {
     const currentDate = moment(date);
 
-    if (
-      every(
-        [date, projects_count, projects_gave_update_count],
-        (item) => !isUndefined(item),
-      ) &&
-      currentDate.isSame(moment(projects_gave_update_count.date), 'day') &&
-      currentDate.isSame(moment(projects_count.date), 'day') &&
-      projects_count.value !== 0
-    ) {
-      return projects_gave_update_count.value / projects_count.value;
+    const totalUpdates = reduce(
+      projects_gave_update_counts,
+      (sum, item) => {
+        return (
+          sum + (currentDate.isSame(moment(item.date), 'day') ? item.value : 0)
+        );
+      },
+      0,
+    );
+
+    const totalCount = reduce(
+      projects_counts,
+      (sum, item) => {
+        return (
+          sum + (currentDate.isSame(moment(item.date), 'day') ? item.value : 0)
+        );
+      },
+      0,
+    );
+
+    if (totalUpdates > 0 && totalCount > 0) {
+      return totalUpdates / totalCount;
     } else {
       return undefined;
     }

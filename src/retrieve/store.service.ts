@@ -159,6 +159,24 @@ export class StoreService {
     }
   }
 
+  async replaceAllGoogleSheetMetrics(output: GoogleSheetOutput) {
+    await this.googleSheetModel.deleteMany({}); //remove all existing documents
+
+    for (const metricName in output) {
+      const metricData = output[metricName];
+      for await (const metric of metricData) {
+        const metricDate = metric.date;
+        const metricValue = metric.value;
+
+        await this.googleSheetModel.create({
+          date: metricDate,
+          metric_name: metricName,
+          metric_value: metricValue,
+        });
+      }
+    }
+  }
+
   async storeLatestCompoundMetrics(
     date: string,
     output: CompoundMetricsOutput,
