@@ -87,6 +87,15 @@ export class GoogleSheetRetriever
     return zipObject(columns_name, row_values) as GoogleSheetSerializedValues;
   }
 
+  private serializeSheetRowsValues(
+    columns_name: Array<GoogleSheetColumnsName>,
+    row_values: Array<any>,
+  ): GoogleSheetSerializedValues[] {
+    return map(row_values, (rValue) => {
+      return zipObject(columns_name, rValue) as GoogleSheetSerializedValues;
+    });
+  }
+
   private columnsName(sheet_values: any[][]): Array<GoogleSheetColumnsName> {
     return sheet_values[0];
   }
@@ -114,6 +123,20 @@ export class GoogleSheetRetriever
     }
   }
 
+  private transformSheetValues(sheet_values: any[][]): any[][] {
+    return map(sheet_values, (value) => {
+      return map(value, (value) => {
+        const trimmedValue = value.trim();
+
+        if (!isNaN(+trimmedValue)) {
+          return toNumber(trimmedValue);
+        } else {
+          return trimmedValue;
+        }
+      });
+    });
+  }
+
   private serialize(
     sheets: Array<sheets_v4.Schema$Sheet>,
     sheets_values: Array<sheets_v4.Schema$ValueRange>,
@@ -121,14 +144,18 @@ export class GoogleSheetRetriever
     return reduce(
       sheets_values,
       (previous, current, index) => {
-        const sheetValues = current.values;
+        const sheetData = current.values;
         const sheetTitle = sheets[index].properties.title;
+
+        // extract Column names and values
+        const [sheetColumnName, ...sheetValues] = sheetData;
+        const latestRows = this.transformSheetValues(sheetValues);
 
         return defaults(
           {
-            [sheetTitle]: this.serializeSheetRowValues(
-              this.columnsName(sheetValues),
-              this.latestRow(sheetValues),
+            [sheetTitle]: this.serializeSheetRowsValues(
+              sheetColumnName,
+              latestRows,
             ),
           },
           previous,
